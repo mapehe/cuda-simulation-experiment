@@ -48,7 +48,8 @@ with open(filename, 'rb') as f:
                 print(f"Warning: Incomplete data found at iteration {current_iter}")
                 break
 
-            array_2d = flat_slice.reshape((height, width))
+            tmp_2d = flat_slice.reshape((height, width))
+            array_2d = np.flipud(tmp_2d)
             rgb_image = complex_to_rgb(array_2d)
             rgb_uint8 = (rgb_image * 255).astype(np.uint8)
             writer.append_data(rgb_uint8)
