@@ -30,8 +30,6 @@ export ZONE="us-east1-d"
 export REGION="us-east1"
 ```
 
-## How to work
-
 ### 2. Workflow
 
 **1. Initialize**
