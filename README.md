@@ -9,6 +9,9 @@ Gross-Pitaevskii Equation (GPE):
 $$i \frac{\partial \Psi}{\partial \tau} = \left( -\frac{1}{2} \nabla^2 + V +
 \kappa |\Psi|^2 \right) \Psi$$
 
+⚠️ Notice: Experimental Status: Please be aware that this repo is highly
+experimental at the moment.
+
 ## Cloud Environment
 
 This project includes scripts to streamline running high-resolution simulations
