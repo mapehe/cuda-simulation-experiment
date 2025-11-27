@@ -1,8 +1,27 @@
 {
-  "iterations": 512,
-  "gridWidth": 512,
-  "gridHeight": 512,
+  "iterations": 131072,
+  "gridWidth": 1024,
+  "gridHeight": 1024,
   "threadsPerBlockX": 32,
   "threadsPerBlockY": 32,
-  "outputFile": "simulation_result"
+  "downloadFrequency": 512,
+  "outputFile": "simulation_result",
+  "kernelMode": "grossPitaevskii",
+
+  "L": 1.0,
+  "sigma": 0.05,
+  "x0": 0.0,
+  "y0": 0.0,
+  "kx": 1.5,
+  "ky": 0.0,
+  "amp": 1.0,
+  "trapStr": 40000.0,
+
+  "obstacleX": -0.07,
+  "obstacleY": -0.07,
+  "obstacleSigma": 0.01,
+  "obstacleHeight": 100000,
+
+  "dt": 0.000002,
+  "g": 3000.0
 }

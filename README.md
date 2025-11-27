@@ -70,23 +70,17 @@ Important: Delete the instance when finished to avoid unnecessary billing.
 ./scripts/cloud/compile_and_run.sh
 ```
 
-### 3. Postprocess
+### 3. Export into a bucket
 
-Check the contents of your storage bucket with this command.
+The following command will visualize your simulation as an `.mp4` that is uploaded
+into your Google Cloud storage bucket.
 
-```
-gcloud storage ls gs://$STORAGE_BUCKET/
-```
-
-Download the desried file
-
-```
-gcloud storage cp gs://$STORAGE_BUCKET/$FILE $FILE
+```bash
+./scripts/cloud/compile_and_run.sh --upload-video
 ```
 
-Run the postprocess script
+If you want the raw binary data instead, run.
 
+```bash
+./scripts/cloud/compile_and_run.sh --upload
 ```
-./scripts/postprocess/postprocess.py $FILE
-```
-

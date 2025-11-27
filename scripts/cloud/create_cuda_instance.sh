@@ -1,9 +1,7 @@
 #!/bin/bash
 
-if [ -z "${ZONE+x}" ]; then
-    echo "Error: ZONE is not set, is your .env loaded?" >&2
-    exit 1
-fi
+cd $(dirname "$0")
+source load_env.sh
 
 gcloud compute instances create cuda-gpu --project=$PROJECT_ID \
   --zone=$ZONE --machine-type=n1-standard-1 \

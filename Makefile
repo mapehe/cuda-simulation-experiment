@@ -7,6 +7,7 @@ NVCC          = nvcc
 # Add architecture flags here (e.g., -arch=sm_75) if you know your GPU
 NVCC_FLAGS    = -O3 -std=c++17
 # NVCC_FLAGS += -arch=sm_70 
+LIBS          = -lcufft
 
 # **Dependency Generation Flags**
 # -M: Tells nvcc/gcc/g++ to output a rule suitable for make describing the dependencies of the source file.
@@ -21,7 +22,7 @@ BIN_DIR       = bin
 INC_DIR       = include
 
 # Find all .cu files in the src directory
-SOURCES       = $(wildcard $(SRC_DIR)/*.cu)
+SOURCES       = $(shell find $(SRC_DIR) -name "*.cu")
 # Create a list of object files based on source files
 OBJECTS       = $(patsubst $(SRC_DIR)/%.cu, $(OBJ_DIR)/%.o, $(SOURCES))
 # **Create a list of dependency files based on source files**
@@ -37,13 +38,14 @@ all: directories $(BIN_DIR)/$(TARGET)
 # Rule to link object files into the final executable
 $(BIN_DIR)/$(TARGET): $(OBJECTS)
 	@echo "Linking..."
-	$(NVCC) $(OBJECTS) -o $@
+	$(NVCC) $(OBJECTS) $(LIBS) -o $@
 	@echo "Build complete: $@"
 
 # Rule to compile .cu files into .o files
 # **Dependency generation is added here via $(DEP_FLAGS)**
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu
 	@echo "Compiling $<..."
+	@mkdir -p $(dir $@)
 	$(NVCC) $(NVCC_FLAGS) $(DEP_FLAGS) -I$(INC_DIR) -c $< -o $@
 
 # Create specific directories if they don't exist

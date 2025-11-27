@@ -1,6 +1,5 @@
 #include "json.hpp"
 #include "simulation.h"
-#include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
 #include <string>
