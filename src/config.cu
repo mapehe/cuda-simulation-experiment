@@ -21,6 +21,7 @@ void get_and_validate_param(T &config_field, const json &j,
 }
 
 inline constexpr auto is_positive = [](auto const &x) { return x > 0; };
+inline constexpr auto is_non_negtive = [](auto const &x) { return !(x < 0); };
 inline constexpr auto always_true = [](auto const &) { return true; };
 
 Params preprocessParams(const json &j) {
@@ -30,6 +31,7 @@ Params preprocessParams(const json &j) {
   Params config;
 
   const char *const positive_number_message = "must be a positive number.";
+  const char *const non_negtive_number_message = "must not be negative.";
 
   const auto is_not_empty = [](const std::string &val) { return !val.empty(); };
   const char *const not_empty_message = "cannot be empty.";
@@ -76,8 +78,8 @@ Params preprocessParams(const json &j) {
 
   get_and_validate_param<float>(config.amp, j, "amp", always_true, "");
 
-  get_and_validate_param<float>(config.trapStr, j, "trapStr", is_positive,
-                                positive_number_message);
+  get_and_validate_param<float>(config.trapStr, j, "trapStr", is_non_negtive,
+                                non_negtive_number_message);
 
   // --- Obstacle parameters ---
   get_and_validate_param<float>(config.obstacleX, j, "obstacleX", always_true,
@@ -92,11 +94,25 @@ Params preprocessParams(const json &j) {
   get_and_validate_param<float>(config.obstacleHeight, j, "obstacleHeight",
                                 is_positive, positive_number_message);
 
-  get_and_validate_param<float>(config.g, j, "g", is_positive,
-                                positive_number_message);
+  get_and_validate_param<float>(config.g, j, "g", always_true, "");
 
   get_and_validate_param<float>(config.dt, j, "dt", is_positive,
                                 positive_number_message);
+
+  get_and_validate_param<float>(config.V_bias, j, "V_bias", is_non_negtive,
+                                non_negtive_number_message);
+
+  get_and_validate_param<float>(config.r_0, j, "r_0", is_non_negtive,
+                                non_negtive_number_message);
+
+  get_and_validate_param<float>(config.sigma2, j, "sigma2", is_non_negtive,
+                                non_negtive_number_message);
+
+  get_and_validate_param<float>(config.absorbStrength, j, "absorbStrength",
+                                is_non_negtive, non_negtive_number_message);
+
+  get_and_validate_param<float>(config.absorbWidth, j, "absorbWidth",
+                                is_non_negtive, non_negtive_number_message);
 
   std::cout << "[Preprocess] Simulation configured to run for "
             << config.iterations << " iterations on a " << config.gridWidth

@@ -70,25 +70,30 @@ void normalizePsi(SimulationData<CUDAKernelMode::GrossPitaevskii> &data,
   cudaDeviceSynchronize();
 }
 
-__global__ void initHarmonicTrap(float *d_V, int width, int height, float dx,
-                                 float dy, float trapFreqSq) {
+__global__ void initComplexPotential(cuComplex *d_V_tot, int width, int height,
+                                     float dx, float dy, float trapFreqSq,
+                                     float V_bias, float r_0, float sigma,
+                                     float absorb_strength,
+                                     float absorb_width) {
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
   int idx = y * width + x;
 
-  if (x >= width || y >= height) {
+  if (x >= width || y >= height)
     return;
-  }
 
-  const float center_x = width / 2.0f;
-  const float center_y = height / 2.0f;
-  const float scale = fminf(width, height) / 2.0f;
+  float phys_x = (x - width / 2.0f) * dx;
+  float phys_y = (height / 2.0f - y) * dy;
+  float r = sqrtf(phys_x * phys_x + phys_y * phys_y);
 
-  const float nx = (x - center_x) / scale;
-  const float ny = (center_y - y) / scale;
+  float v_harm = 0.5f * trapFreqSq * r * r;
+  float v_waterfall = V_bias * tanhf((r - r_0) / sigma);
+  float val_real = v_harm + v_waterfall + V_bias;
 
-  float r2 = nx * nx + ny * ny;
-  d_V[idx] = 0.5f * trapFreqSq * r2;
+  float val_imag =
+      -1.0f * absorb_strength * expf(-(r * r) / (absorb_width * absorb_width));
+
+  d_V_tot[idx] = make_cuComplex(val_real, val_imag);
 }
 
 __global__ void initGaussian(cuFloatComplex *d_psi, int width, int height,
@@ -119,59 +124,8 @@ __global__ void initGaussian(cuFloatComplex *d_psi, int width, int height,
   d_psi[idx] = make_cuFloatComplex(envelope * cos_phase, envelope * sin_phase);
 }
 
-#include <cuComplex.h>
-
-__global__ void initComplexPotential(
-    cuComplex *d_V_tot,   
-    int width, int height, 
-    float dx, float dy, 
-    float trapFreqSq, float V_bias, float r_0, float sigma,
-    float absorb_strength, float absorb_width
-) {
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    int y = threadIdx.y + blockIdx.y * blockDim.y;
-    int idx = y * width + x;
-
-    if (x >= width || y >= height) return;
-
-    float phys_x = (x - width / 2.0f) * dx;
-    float phys_y = (height / 2.0f - y) * dy;
-    float r = sqrtf(phys_x * phys_x + phys_y * phys_y);
-
-    float v_harm = 0.5f * trapFreqSq * r * r;
-    float v_waterfall = V_bias * tanhf((r - r_0) / sigma);
-    float val_real = v_harm + v_waterfall + V_bias;
-
-    float val_imag = -1.0f * absorb_strength * expf(-(r*r) / (absorb_width * absorb_width));
-
-    d_V_tot[idx] = make_cuComplex(val_real, val_imag);
-}
-
-__global__ void addGaussianObstacle(float *d_V, int width, int height, float dx,
-                                    float dy, float x0, float y0, float sigma,
-                                    float heightV) {
-  int x = threadIdx.x + blockIdx.x * blockDim.x;
-  int y = threadIdx.y + blockIdx.y * blockDim.y;
-  int idx = y * width + x;
-
-  if (x >= width || y >= height) {
-    return;
-  }
-
-  const float center_x = width / 2.0f;
-  const float center_y = height / 2.0f;
-  const float scale = fminf(width, height) / 2.0f;
-
-  const float nx = (x - center_x) / scale;
-  const float ny = (center_y - y) / scale;
-
-  float dist_sq = (nx - x0) * (nx - x0) + (ny - y0) * (ny - y0);
-
-  d_V[idx] += heightV * expf(-dist_sq / (2.0f * sigma * sigma));
-}
-
-__global__ void evolveRealSpace(cuFloatComplex *d_psi, float *d_V, int width,
-                                int height, float g, float dt) {
+__global__ void evolveRealSpace(cuFloatComplex *d_psi, cuFloatComplex *d_V,
+                                int width, int height, float g, float dt) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int j = blockIdx.y * blockDim.y + threadIdx.y;
   int idx = j * width + i;
@@ -180,15 +134,24 @@ __global__ void evolveRealSpace(cuFloatComplex *d_psi, float *d_V, int width,
     return;
 
   cuFloatComplex psi = d_psi[idx];
-  float V = d_V[idx];
+  cuFloatComplex V_c = d_V[idx];
+
+  float V_real = cuCrealf(V_c);
+  float V_imag = cuCimagf(V_c);
 
   float n = cuCrealf(psi) * cuCrealf(psi) + cuCimagf(psi) * cuCimagf(psi);
-  float angle = -(V + g * n) * dt;
+
+  float angle = -(V_real + g * n) * dt;
   float c, s;
   sincosf(angle, &s, &c);
   cuFloatComplex phasor = make_cuFloatComplex(c, s);
 
-  d_psi[idx] = cuCmulf(psi, phasor);
+  float decay_factor = expf(V_imag * dt);
+
+  cuFloatComplex psi_rotated = cuCmulf(psi, phasor);
+
+  d_psi[idx] = make_cuFloatComplex(cuCrealf(psi_rotated) * decay_factor,
+                                   cuCimagf(psi_rotated) * decay_factor);
 }
 
 __global__ void evolveMomentumSpace(cuFloatComplex *d_psi,
@@ -229,7 +192,7 @@ MemoryResource<CUDAKernelMode::GrossPitaevskii>::allocate(const Params &p) {
   cudaMalloc(&data.d_psi, size_psi);
   cudaMemset(data.d_psi, 0, size_psi);
 
-  size_t size_V = num_pixels * sizeof(float);
+  size_t size_V = num_pixels * sizeof(cuFloatComplex);
   cudaMalloc(&data.d_V, size_V);
   cudaMemset(data.d_V, 0, size_V);
 
@@ -263,13 +226,9 @@ MemoryResource<CUDAKernelMode::GrossPitaevskii>::allocate(const Params &p) {
   normalizePsi(data, p.gridWidth, p.gridHeight, dx, dy);
   cudaDeviceSynchronize();
 
-  initHarmonicTrap<<<data.grid, data.block>>>(data.d_V, p.gridWidth,
-                                              p.gridHeight, dx, dy, p.trapStr);
-  cudaDeviceSynchronize();
-
-  addGaussianObstacle<<<data.grid, data.block>>>(
-      data.d_V, p.gridWidth, p.gridHeight, dx, dy, p.obstacleX, p.obstacleY,
-      p.obstacleSigma, p.obstacleHeight);
+  initComplexPotential<<<data.grid, data.block>>>(
+      data.d_V, p.gridWidth, p.gridHeight, dx, dy, p.trapStr, p.V_bias, p.r_0,
+      p.sigma2, p.absorbStrength, p.absorbWidth);
 
   cudaDeviceSynchronize();
 

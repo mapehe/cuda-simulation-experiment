@@ -59,6 +59,12 @@ struct Params {
 
   float dt;
   float g;
+
+  float V_bias;
+  float r_0;
+  float sigma2;
+  float absorbStrength;
+  float absorbWidth;
 };
 
 Params preprocessParams(const json &j);
