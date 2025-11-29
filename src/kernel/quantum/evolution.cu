@@ -41,9 +41,9 @@ __global__ void evolveMomentumSpace(cuFloatComplex *d_psi,
   d_psi[idx] = res;
 }
 
-__global__ void initKineticOperator(cuFloatComplex *d_expK, int width,
-                                    int height, float dk_x, float dk_y,
-                                    float dt) {
+__global__ void initKineticOperator(cuFloatComplex *d_expK,
+                                    KineticInitArgs args) {
+  const auto [width, height, dk_x, dk_y, dt] = args;
   int idx = get_flat_index({.width = width, .height = height});
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int j = blockIdx.y * blockDim.y + threadIdx.y;

@@ -19,8 +19,13 @@ __global__ void scaleWavefunction(cuFloatComplex *d_psi, int totalElements,
   }
 }
 
-void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid, int width,
-                  int height, float dx, float dy) {
+void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid,
+                  GaussianArgs args) {
+  int width = args.width;
+  int height = args.height;
+  int dx = args.dx;
+  int dy = args.dy;
+
   int numElements = width * height;
 
   thrust::device_ptr<cuFloatComplex> th_psi(d_psi);
@@ -38,9 +43,9 @@ void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid, int width,
   cudaDeviceSynchronize();
 }
 
-__global__ void initGaussian(cuFloatComplex *d_psi, int width, int height,
-                             float dx, float dy, float x0, float y0,
-                             float sigma, float kx, float ky, float amplitude) {
+__global__ void initGaussian(cuFloatComplex *d_psi, GaussianArgs args) {
+  const auto [width, height, dx, dy, x0, y0, sigma, kx, ky, amplitude] = args;
+
   int idx = get_flat_index({.width = width, .height = height});
   auto [nx, ny] = get_normalized_coords({.width = width, .height = height});
 

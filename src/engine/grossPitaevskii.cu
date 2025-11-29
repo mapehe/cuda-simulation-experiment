@@ -36,19 +36,39 @@ GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
   float dk_x = (2.0f * M_PI) / L_x;
   float dk_y = (2.0f * M_PI) / L_y;
 
-  initGaussian<<<grid, block>>>(d_psi, width, height, dx, dy, p.x0, p.y0,
-                                p.sigma, p.kx, p.ky, p.amp);
+  const GaussianArgs gArgs = {.width = width,
+                              .height = height,
+                              .dx = dx,
+                              .dy = dy,
+                              .x0 = p.x0,
+                              .y0 = p.y0,
+                              .sigma = p.sigma,
+                              .kx = p.kx,
+                              .ky = p.ky,
+                              .amplitude = p.amp};
+  const PotentialArgs pArgs = {.width = width,
+                               .height = height,
+                               .dx = dx,
+                               .dy = dy,
+                               .trapFreqSq = p.trapStr,
+                               .V_bias = p.V_bias,
+                               .r_0 = p.r_0,
+                               .sigma = p.sigma2,
+                               .absorb_strength = p.absorbStrength,
+                               .absorb_width = p.absorbWidth};
+  const KineticInitArgs kArgs = {
+      .width = width, .height = height, .dk_x = dk_x, .dk_y = dk_y, .dt = dt};
+
+  initGaussian<<<grid, block>>>(d_psi, gArgs);
   cudaDeviceSynchronize();
 
-  normalizePsi(d_psi, block, grid, width, height, dx, dy);
+  normalizePsi(d_psi, block, grid, gArgs);
   cudaDeviceSynchronize();
 
-  initComplexPotential<<<grid, block>>>(d_V, width, height, dx, dy, p.trapStr,
-                                        p.V_bias, p.r_0, p.sigma2,
-                                        p.absorbStrength, p.absorbWidth);
+  initComplexPotential<<<grid, block>>>(d_V, pArgs);
   cudaDeviceSynchronize();
 
-  initKineticOperator<<<grid, block>>>(d_expK, width, height, dk_x, dk_y, dt);
+  initKineticOperator<<<grid, block>>>(d_expK, kArgs);
   cudaDeviceSynchronize();
 }
 
