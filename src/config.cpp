@@ -1,30 +1,27 @@
 #include "config.h"
-#include <iostream>
 #include <string>
-#include <vector>
+#include <string_view>
 #include <ranges>
-
+#include <iostream>
 
 inline const nlohmann::json& get_nested(const nlohmann::json& j,
                                         const std::string& key)
 {
     const nlohmann::json* ptr = &j;
 
-    size_t start = 0;
-    while (true) {
-        size_t dot = key.find('.', start);
-        std::string part = key.substr(start, dot - start);
+    for (auto part_view : std::string_view(key) | std::views::split('.')) {
+        std::string part;
+        for (char c : part_view) {
+            part.push_back(c);
+        }
 
-        ptr = &ptr->at(part);  // go down one level
-
-        if (dot == std::string::npos)
-            break;
-
-        start = dot + 1;
+        ptr = &ptr->at(part);
     }
 
     return *ptr;
 }
+
+
 
 template <typename T>
 void get_and_validate_param(T &config_field, const json &j,
