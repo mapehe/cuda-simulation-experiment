@@ -15,17 +15,7 @@ public:
 
 private:
   cuFloatComplex *d_grid;
-
   std::vector<cuFloatComplex> h_data;
-
-  int width;
-  int height;
-  int iterations;
-  int downloadFrequency;
-  int downloadIterator;
-
-  dim3 grid;
-  dim3 block;
 };
 
 #endif

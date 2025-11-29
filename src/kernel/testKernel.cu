@@ -1,5 +1,5 @@
-#include "kernel/testKernel.h"
 #include "io.h"
+#include "kernel/testKernel.h"
 
 __host__ __device__ inline int get_flat_index(int x, int y, int gridWidth) {
   int W = gridWidth;
@@ -41,15 +41,8 @@ __global__ void testKernel(cuFloatComplex *d_array, int gridWidth,
 }
 
 TestSimulation::TestSimulation(const Params &p)
-    : d_grid(nullptr), width(p.gridWidth), height(p.gridHeight),
-      iterations(p.iterations), downloadFrequency(p.downloadFrequency),
-      downloadIterator(1) {
-  grid = dim3(p.threadsPerBlockX, p.threadsPerBlockY);
-  block = dim3((p.gridWidth + grid.x - 1) / grid.x,
-               (p.gridHeight + grid.y - 1) / grid.y);
-
+    : SimulationMode(p), d_grid(nullptr) {
   size_t size = width * height * sizeof(cuFloatComplex);
-
   cudaError_t err = cudaMalloc(&d_grid, size);
   if (err != cudaSuccess) {
     throw std::runtime_error("Failed to allocate TestSimulation device memory");
@@ -57,8 +50,8 @@ TestSimulation::TestSimulation(const Params &p)
 
   cudaMemset(d_grid, 0, size);
 
-  std::cout << "[Helper] Allocated an array (" << width << "x" << height << "x"
-            << iterations << ") on device." << std::endl;
+  std::cout << "[Helper] Allocated an array (" << width << "x" << height
+            << ") on device." << std::endl;
 }
 
 TestSimulation::~TestSimulation() {

@@ -173,16 +173,11 @@ __global__ void evolveMomentumSpace(cuFloatComplex *d_psi,
   d_psi[idx] = res;
 }
 
-GrossPitaevskiiSimulation::GrossPitaevskiiSimulation(const Params &p) {
+GrossPitaevskiiSimulation::GrossPitaevskiiSimulation(const Params &p)
+    : SimulationMode(p) {
 
-  width = p.gridWidth;
-  height = p.gridHeight;
-  iterations = p.iterations;
-  downloadFrequency = p.downloadFrequency;
   dt = p.dt;
   g = p.g;
-  downloadIterator = 1;
-
   cufftPlan2d(&plan, height, width, CUFFT_C2C);
 
   size_t num_pixels = width * height;

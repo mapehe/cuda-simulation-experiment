@@ -5,7 +5,7 @@
 # Compiler settings
 NVCC          = nvcc
 # Add architecture flags here (e.g., -arch=sm_75) if you know your GPU
-NVCC_FLAGS    = -O3 -std=c++17
+NVCC_FLAGS    = -O3 -std=c++20
 # NVCC_FLAGS += -arch=sm_70 
 LIBS          = -lcufft
 

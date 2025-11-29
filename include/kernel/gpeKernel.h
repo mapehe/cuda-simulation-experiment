@@ -44,21 +44,10 @@ private:
   cuFloatComplex *d_psi;
   cuFloatComplex *d_V;
   cuFloatComplex *d_expK;
-
-  std::vector<cuFloatComplex> h_data;
-
-  cufftHandle plan;
-
-  dim3 grid;
-  dim3 block;
-
-  int width;
-  int height;
-  int iterations;
-  int downloadFrequency;
-  int downloadIterator;
   float dt;
   float g;
+  cufftHandle plan;
+  std::vector<cuFloatComplex> h_data;
 };
 
 #endif
