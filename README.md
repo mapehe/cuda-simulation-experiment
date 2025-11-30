@@ -1,86 +1,102 @@
-# CUDA Analog Gravity Experiment
+# FluxLab: High-Performance Computational Physics Template
 
-## The Goal
-To simulate an "event horizon" in a Bose-Einstein Condensate (BEC) using
-parallel spectral methods. The aim is to observe Hawking-like phonon emission
-where the flow velocity exceeds the speed of sound using the dimensionless
-Gross-Pitaevskii Equation (GPE):
+FluxLab is a modular CUDA C++ project template designed to explore bridging the
+gap between rigorous computational physics and modern software engineering.
 
-$$i \frac{\partial \Psi}{\partial \tau} = \left( -\frac{1}{2} \nabla^2 + V +
-\kappa |\Psi|^2 \right) \Psi$$
 
-⚠️ **Experimental:** Please be aware that this repo is under active development.
+## Purpose
 
-## Cloud Environment
+Scientific code is frequently written as monolithic, single-use scripts that
+are difficult to read, maintain, or scale. FluxLab serves as a prototype for
+treating physical simulations as production-grade software. It provides a
+scaffold for wrapping high-precision numerical solvers in a modular
+architecture featuring automated build systems, rigorous simulation testing and
+robust utility scripts.
 
-This project includes scripts to streamline running high-resolution simulations
-on Google Cloud Platform (GCP) GPU instances.
+As a proof of concept, the project currently implements a **ComputeEngine** for
+the Gross-Pitaevskii Equation (GPE). This reference engine utilizes a parallel
+spectral solver to demonstrate how high-performance physics logic can be
+successfully decoupled from the infrastructure.
 
-### 1. Configuration
-Ensure you have the `gcloud` CLI installed and authorized with permissions to
-create GPU-enabled Compute Engine instances.
+## Audience
 
-Create an `.env` file with the following contents.
+FluxLab serves as a translation layer between two target groups:
 
-```
-export USER="your-local-username"
-export PROJECT_ID="your-google-cloud-project-name"
-export SERVICE_ACCOUNT="your-google-cloud-service-account"
-export ZONE="us-east1-d"
-export REGION="us-east1
-export STORAGE_BUCKET="your-storage-bucket"
-```
+* For **software engineers** it provides a clean, linted, and modular C++
+  codebase. It abstracts physics logic into **ComputeEngines** and handles the
+  heavy lifting of GPU memory management, I/O, and cloud provisioning.
 
-### 2. Workflow
+* For **physicists** it tackles the architectural challenges often encountered
+  in scientific computing. FluxLab provides a professional software scaffolding
+  that automates parameter parsing, structured I/O, and simulation bookkeeping.
+  This ensures high-quality, reproducible software design without requiring the
+  researcher to function as a systems architect.
 
-#### 1. Initialize
+## Project Philosophy
 
-Load your configuration.
-```bash
-source .env
-```
+1. **Unconstrained Extensibility:** The library never obstructs the researcher.
+   The **ComputeEngine** abstractions are designed to be thin and transparent,
+   accommodating arbitrary CUDA simulations. This ensures the framework
+   supports unique or experimental physics logic without imposing restrictive
+   architectural patterns.
 
-#### 2. Provision
+2. **Testability**: Correctness is enforced through rigorous automated
+   validation of results against reference snapshots and strictly monitoring
+   conservation laws (e.g., energy, mass) to guarantee simulation fidelity.
 
-Spin up a CUDA-enabled VM.
-```bash
-./scripts/cloud/create_cuda_instance.sh
-```
+3. **Cloud-First Accessibility**: The template decouples high-performance
+   computing from local hardware ownership. Through simple but robust utility
+   scripts, FluxLab allows users to seamlessly develop, build, and run
+   simulations on Cloud VMs, removing the requirement for a physical NVIDIA GPU
+   workstation.
 
-#### 3. Connect
+## Implemented Physics: The Gross-Pitaevskii Equation
 
-SSH into the machine and you will be prompted to install the NVIDIA drivers.
-_Note: Wait a few minutes after creation._
-```bash
-./scripts/cloud/ssh_instance.sh
-```
+FluxLab currently implements a solver for the **Gross-Pitaevskii Equation
+(GPE)**.
 
-#### 4. Run
+The GPE is used to describe Bose-Einstein Condensates (BECs) and allows for the
+simulation of macroscopic quantum phenomena—such as vortex formation and
+interference patterns. The time-evolution of the wavefunction $\psi$ is
+governed by:
 
-Compile and execute the solver on the remote GPU. This will also upload your
-results to a bucket.
-```bash
-./scripts/cloud/compile_and_run.sh
-```
+$$i \hbar \frac{\partial \psi}{\partial t} = \left( -\frac{\hbar^2}{2m}
+\nabla^2 + V(\mathbf{r}) + g |\psi|^2 \right) \psi$$
 
-#### 5. Teardown
+### Role in the Template: Architectural Validation
 
-Important: Delete the instance when finished to avoid unnecessary billing.
-```bash
-./scripts/cloud/compile_and_run.sh
-```
+Implementing the GPE serves as a comprehensive "vertical slice" to validate the
+framework's internal plumbing. The physics requirements of the GPE act as a
+stress test for the system's technical capabilities:
 
-### 3. Export into a bucket
+* **Complex State Management (SSFM):** The **Split-Step Fourier Method**
+  necessitates rigorous bookkeeping. It requires rapid, iterative switching
+  between Cartesian space and Frequency space (via cuFFT). This forces the
+  framework to correctly manage device-side FFT plans, complex-valued memory
+  buffers, and synchronization between spectral and potential evolution
+  kernels.
 
-The following command will visualize your simulation as an `.mp4` that is uploaded
-into your Google Cloud storage bucket.
+* **ComputeEngine Verification:** The GPE acts as the reference implementation
+  for how `ComputeEngine` modules should be tested. Because the GPE has strict
+      invariants, it allows for validation against physical laws alongside
+      **snapshot regression testing**. This ensures that the engine not only
+      conserves physical quantities but also maintains exact numerical
+      reproducibility across commits.
 
-```bash
-./scripts/cloud/compile_and_run.sh --upload-video
-```
+## Getting Started
 
-If you want the raw binary data instead, run.
+### No Local GPU? 
 
-```bash
-./scripts/cloud/compile_and_run.sh --upload
-```
+If you do not have access to a local NVIDIA workstation, refer to
+[CLOUD.md](CLOUD.md). This guide details how to use the included utility
+scripts to provision ephemeral cloud instances and run simulations remotely.
+
+### Building Your Own Engine
+
+To implement your own physics logic, refer to the `GrossPitaevskiiEngine`
+class. This implementation serves as an example of how to inherit from the base
+`ComputeEngine`class, manage custom memory, and interface with the GPU.
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
