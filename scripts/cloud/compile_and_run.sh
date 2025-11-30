@@ -21,7 +21,7 @@ rsync -avz \
   --exclude '.git' \
   --exclude 'build_source' \
   --exclude '*.o' \
-  ./src ./include Makefile config.json requirements.txt ./scripts \
+  ./src ./include Makefile config.json configOverrides.json requirements.txt ./scripts \
   cuda-gpu:~/build_source/
 
 if $HAS_UPLOAD; then
