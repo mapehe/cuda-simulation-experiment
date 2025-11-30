@@ -5,7 +5,7 @@
   "threadsPerBlockX": 32,
   "threadsPerBlockY": 32,
   "downloadFrequency": 1024,
-  "simulationMode": "test",
+  "simulationMode": "grossPitaevskii",
 
   "grossPitaevskii": {
     "L": 1.0,

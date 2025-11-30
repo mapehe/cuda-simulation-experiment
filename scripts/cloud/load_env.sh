@@ -22,7 +22,7 @@ MISSING_FOUND=false
 
 for VAR_NAME in "${REQUIRED_VARS[@]}"; do
   if [[ -z "${!VAR_NAME}" ]]; then
-    echo "Error: variable '$VAR_NAME' is not set or is empty. Make sure your .env is correctly set. (See README)"
+    echo "Error: variable '$VAR_NAME' is not set or is empty. Make sure your .env is set correctly. (See README)"
     MISSING_FOUND=true
   fi
 done
