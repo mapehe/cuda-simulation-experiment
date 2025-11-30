@@ -76,7 +76,7 @@ Params preprocessParams(const json &j) {
   get_and_validate_param<int>(config.threadsPerBlockY, j, "threadsPerBlockY",
                               is_positive, positive_number_message);
 
-  get_and_validate_param<std::string>(config.outputFile, j, "outputFile",
+  get_and_validate_param<std::string>(config.output, j, "output",
                                       is_not_empty, not_empty_message);
 
   get_and_validate_param<SimulationMode>(config.simulationMode, j,

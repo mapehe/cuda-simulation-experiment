@@ -29,5 +29,5 @@ void run(json config) {
   }
 
   std::cout << "[CPU] Simulation complete." << std::endl;
-  sim->saveResults(params.outputFile);
+  sim->saveResults(params.output);
 }

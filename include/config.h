@@ -56,7 +56,7 @@ struct Params {
   int threadsPerBlockX;
   int threadsPerBlockY;
   int downloadFrequency;
-  std::string outputFile;
+  std::string output;
   SimulationMode simulationMode;
 
   GrossPitaevskiiParams grossPitaevskii;

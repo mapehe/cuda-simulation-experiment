@@ -1,20 +1,38 @@
 #!/bin/bash
 
+set -e
+
 cd $(dirname "$0")
 source load_env.sh
 cd "../.."
 
 HAS_UPLOAD=false
 HAS_UPLOAD_VIDEO=false
+OUTPUT_FILE=""
 
-for arg in "$@"; do
-    if [[ "$arg" == "--upload" ]]; then
-        HAS_UPLOAD=true
-    fi
-    if [[ "$arg" == "--upload-video" ]]; then
-        HAS_UPLOAD_VIDEO=true
-    fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --upload) 
+            HAS_UPLOAD=true 
+            ;;
+        --upload-video) 
+            HAS_UPLOAD_VIDEO=true 
+            ;;
+        --output) 
+            OUTPUT_FILE="$2" 
+            shift
+            ;;
+        *) 
+            echo "Unknown parameter: $1" 
+            ;;
+    esac
+    shift 
 done
+
+if [[ -z "$OUTPUT_FILE" ]]; then
+    OUTPUT_FILE="simulation_result_$(date +%Y%m%d_%H%M%S)"
+    echo "Using a generated output filename ${OUTPUT_FILE}"
+fi
 
 rsync -avz \
   -e ./scripts/cloud/gcloud_rsync_wrapper.sh \
@@ -26,14 +44,14 @@ rsync -avz \
 
 if $HAS_UPLOAD; then
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make run && gcloud storage cp simulation_result gs://${STORAGE_BUCKET}/simulation_result_\$(date +%Y%m%d_%H%M%S)'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} && gcloud storage cp ${OUTPUT_FILE} gs://${STORAGE_BUCKET}/${OUTPUT_FILE}'"
 else
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make run'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE}'"
 fi
 
 if $HAS_UPLOAD_VIDEO; then
-    gcloud compute ssh --zone=$ZONE cuda-gpu --command "export STORAGE_BUCKET='${STORAGE_BUCKET}'; bash -s" <<'EOF'
+    gcloud compute ssh --zone=$ZONE cuda-gpu --command "export STORAGE_BUCKET='${STORAGE_BUCKET}' OUTPUT_FILE='${OUTPUT_FILE}'; bash -s" <<'EOF'
             set -e  # Exit immediately if any command fails
             
             cd build_source;
@@ -66,7 +84,7 @@ if $HAS_UPLOAD_VIDEO; then
             fi
 
             echo "Setup complete."
-            ./scripts/postprocess/postprocess.py simulation_result
-            gcloud storage cp simulation_result.mp4 gs://${STORAGE_BUCKET}/simulation_result_$(date +%Y%m%d_%H%M%S).mp4
+            ./scripts/postprocess/postprocess.py ${OUTPUT_FILE}
+            gcloud storage cp ${OUTPUT_FILE}.mp4 gs://${STORAGE_BUCKET}/${OUTPUT_FILE}.mp4
 EOF
 fi

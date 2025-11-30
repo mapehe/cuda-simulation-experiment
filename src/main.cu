@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include "tclap/CmdLine.h"
 
 using json = nlohmann::json;
 
@@ -25,8 +26,9 @@ json readFile(const std::string& filename) {
     return object;
 }
 
-json readConfig() {
+json readConfig(json cmdArgs) {
   json config = readFile(CONFIG_FILENAME);
+  config.merge_patch(cmdArgs); 
 
   try {
       json overrides = readFile(OVERRIDES_FILENAME);
@@ -40,7 +42,25 @@ json readConfig() {
   return config;
 }
 
-int main() {
+json parseArguments(int argc, char** argv) {
+    try {
+        TCLAP::CmdLine cmd("Simulator CLI", ' ', "0.0.1");
+
+        TCLAP::ValueArg<std::string> outputArg("o", "output", "Path to output file", true, "", "string");
+        cmd.add(outputArg);
+        cmd.parse(argc, argv);
+        return json{
+            {"output", outputArg.getValue()}
+        };
+
+    } catch (TCLAP::ArgException &e) { 
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+        return json(); 
+    }
+}
+
+
+int main(int argc, char** argv) {
   std::cout << std::endl;
   std::cout << "============================================" << std::endl;
   std::cout << "||                                        ||" << std::endl;
@@ -49,6 +69,7 @@ int main() {
   std::cout << "============================================" << std::endl;
   std::cout << std::endl << "STARTING..." << std::endl << std::endl;
 
-  run(readConfig());
+  json cmdArgs = parseArguments(argc, argv);
+  run(readConfig(cmdArgs));
   return 0;
 }
