@@ -33,6 +33,12 @@ void TestEngine::solveStep(int t) {
 }
 
 void TestEngine::saveResults(const std::string &filename) {
-  saveToBinary(filename, this->historyData, this->width, this->height,
-               this->iterations);
+  saveToBinaryJSON({
+        .filename = filename,
+        .data = historyData,  
+        .width = width,
+        .height = height,
+        .iterations = iterations,
+        .downloadFrequency = downloadFrequency
+    });
 }

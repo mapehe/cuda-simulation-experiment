@@ -4,9 +4,6 @@
 std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs>
 GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
 
-  float dx = p.grossPitaevskii.L / width;
-  float dy = p.grossPitaevskii.L / height;
-
   float L_x = width * dx;
   float L_y = height * dy;
 
@@ -42,7 +39,12 @@ GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
 }
 
 GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
-    : ComputeEngine(p), dt(p.grossPitaevskii.dt), g(p.grossPitaevskii.g) {
+    : ComputeEngine(p),
+    dt(p.grossPitaevskii.dt),
+    g(p.grossPitaevskii.g),
+    dx(p.grossPitaevskii.L / p.gridWidth),
+    dy(p.grossPitaevskii.L / p.gridHeight)
+{
   cufftPlan2d(&plan, height, width, CUFFT_C2C);
 
   size_t num_pixels = width * height;
@@ -113,6 +115,18 @@ void GrossPitaevskiiEngine::solveStep(int t) {
 }
 
 void GrossPitaevskiiEngine::saveResults(const std::string &filename) {
-  saveToBinary(filename, this->historyData, this->width, this->height,
-               this->iterations);
+  json parameterData = {
+    {"dx", dx},
+    {"dy", dy}
+};
+
+  saveToBinaryJSON({
+        .filename = filename,
+        .data = historyData,  
+        .width = width,
+        .height = height,
+        .iterations = iterations,
+        .downloadFrequency = downloadFrequency,
+        .parameterData = parameterData
+    });
 }

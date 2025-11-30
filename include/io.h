@@ -3,35 +3,46 @@
 
 #include "json.hpp"
 #include <cuComplex.h>
-#include <cuda_runtime.h>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
-#include <string>
+#include <vector>
 
 using json = nlohmann::json;
 
-inline void saveToBinary(const std::string &filename,
-                         const std::vector<cuFloatComplex> &data, int width,
-                         int height, int iterations) {
+struct SaveOptions {
+  std::string filename;
+  const std::vector<cuFloatComplex> &data;
+  int width;
+  int height;
+  int iterations;
+  int downloadFrequency;
+  json parameterData;
+};
+
+inline void saveToBinaryJSON(const SaveOptions &opts) {
+  const auto &[filename, data, width, height, iterations, downloadFrequency,
+               parameterData] = opts;
 
   std::ofstream out(filename, std::ios::out | std::ios::binary);
-  if (!out) {
-    throw std::runtime_error("Could not open file for writing");
-  }
+  if (!out)
+    throw std::runtime_error("Could not open file");
 
-  std::cout << "[Helper] Writing binary output..." << std::endl;
+  json j;
+  j["width"] = width;
+  j["height"] = height;
+  j["iterations"] = iterations;
+  j["downloadFrequency"] = downloadFrequency;
+  j["parameterData"] = parameterData;
+  j["dtype"] = "cuFloatComplex";
 
-  out.write(reinterpret_cast<const char *>(&width), sizeof(int));
-  out.write(reinterpret_cast<const char *>(&height), sizeof(int));
-  out.write(reinterpret_cast<const char *>(&iterations), sizeof(int));
+  std::string header = j.dump();
+  out.write(header.c_str(), header.size());
+  out.write("\n", 1);
 
-  size_t dataSize = data.size() * sizeof(cuFloatComplex);
-  out.write(reinterpret_cast<const char *>(data.data()), dataSize);
+  out.write(reinterpret_cast<const char *>(data.data()),
+            data.size() * sizeof(cuFloatComplex));
 
   out.close();
-  std::cout << "[Helper] Saved " << (dataSize / 1024.0 / 1024.0) << " MB to "
-            << filename << std::endl;
 }
 
 #endif

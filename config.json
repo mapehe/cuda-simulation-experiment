@@ -4,8 +4,8 @@
   "gridHeight": 512,
   "threadsPerBlockX": 32,
   "threadsPerBlockY": 32,
-  "downloadFrequency": 32,
-  "simulationMode": "grossPitaevskii",
+  "downloadFrequency": 1024,
+  "simulationMode": "test",
 
   "grossPitaevskii": {
     "L": 1.0,
