@@ -10,7 +10,7 @@ Scientific code is frequently written as monolithic, single-use scripts that
 are difficult to read, maintain, or scale. FluxLab serves as a prototype for
 treating physical simulations as production-grade software. It provides a
 scaffold for wrapping high-precision numerical solvers in a modular
-architecture featuring automated build systems, rigorous simulation testing and
+architecture featuring rigorous simulation testing and
 robust utility scripts.
 
 As a proof of concept, the project currently implements a **ComputeEngine** for
