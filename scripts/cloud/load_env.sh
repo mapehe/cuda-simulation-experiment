@@ -3,7 +3,7 @@
 FILE="../../.env"
 
 if [ ! -f "$FILE" ]; then
-    echo "Error: .env does not exist in the project root, see README."
+  echo "Error: .env does not exist in the project root (see CLOUD.md)."
     exit 1
 fi
 
@@ -22,7 +22,7 @@ MISSING_FOUND=false
 
 for VAR_NAME in "${REQUIRED_VARS[@]}"; do
   if [[ -z "${!VAR_NAME}" ]]; then
-    echo "Error: variable '$VAR_NAME' is not set or is empty. Make sure your .env is set correctly. (See README)"
+    echo "Error: variable '$VAR_NAME' is not set or is empty. Make sure your .env is set correctly (see CLOUD.md)."
     MISSING_FOUND=true
   fi
 done

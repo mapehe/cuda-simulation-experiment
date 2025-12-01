@@ -20,21 +20,14 @@ export STORAGE_BUCKET="your-storage-bucket"
 
 ## 2. Workflow
 
-### 1. Initialize
-
-Load your configuration.
-```bash
-source .env
-```
-
-### 2. Provision
+### 1. Provision
 
 Spin up a CUDA-enabled VM.
 ```bash
 ./scripts/cloud/create_cuda_instance.sh
 ```
 
-### 3. Connect
+### 2. Connect
 
 SSH into the machine and you will be prompted to install the NVIDIA drivers.
 _Note: Wait a few minutes after creation._
@@ -42,32 +35,39 @@ _Note: Wait a few minutes after creation._
 ./scripts/cloud/ssh_instance.sh
 ```
 
-### 4. Run
+### 3. Run
 
-Compile and execute the solver on the remote GPU. This will also upload your
-results to a bucket.
+Compile and execute the solver on the remote GPU with the following script.
+
+If you want to get the resulting binary data to cloud bucket, add the
+`--upload` flag.
+
+If you want to see the resulting `.mp4` add the `--upload-video` flag.
+```bash
+./scripts/cloud/compile_and_run.sh
+./scripts/cloud/compile_and_run.sh --upload
+./scripts/cloud/compile_and_run.sh --upload-video
+```
+### 4. Develop
+
+When you run
 ```bash
 ./scripts/cloud/compile_and_run.sh
 ```
+any changes (code or configuration) you make will be `rsync`ed to the remote VM
+before the project is compiled and executed.
+
+#### Clear cache (optional)
+
+Sometimes the remote ends up in an invalid state. You can use
+```bash
+./scripts/cloud/clean_instance.sh
+```
+to clear the build cache and start from scratch.
 
 ### 5. Teardown
 
 Important: Delete the instance when finished to avoid unnecessary billing.
 ```bash
 ./scripts/cloud/compile_and_run.sh
-```
-
-## 3. Export into a bucket
-
-The following command will visualize your simulation as an `.mp4` that is uploaded
-into your Google Cloud storage bucket.
-
-```bash
-./scripts/cloud/compile_and_run.sh --upload-video
-```
-
-If you want the raw binary data instead, run.
-
-```bash
-./scripts/cloud/compile_and_run.sh --upload
 ```
