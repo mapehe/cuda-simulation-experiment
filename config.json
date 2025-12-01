@@ -4,7 +4,7 @@
   "gridHeight": 512,
   "threadsPerBlockX": 32,
   "threadsPerBlockY": 32,
-  "downloadFrequency": 1024,
+  "downloadFrequency": 32,
   "simulationMode": "grossPitaevskii",
 
   "grossPitaevskii": {
@@ -21,7 +21,7 @@
     "r_0": 0.05,
     "sigma2": 0.025,
 
-    "absorbStrength": 10e5,
+    "absorbStrength": 5e4,
     "absorbWidth": 0.025,
 
     "dt": 6e-7,
