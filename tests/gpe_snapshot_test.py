@@ -6,9 +6,11 @@ import json
 import numpy.testing as npt
 import os
 from .util import read_gpe_snapshots
+import time
 
 ROOT_DIR = Path(__file__).parent.parent
-OUTPUT_PATH = ROOT_DIR / "gpe_test_output"
+timestamp_str = "gpe_test_output_%s" % time.strftime("%Y%m%d_%H%M%S")
+OUTPUT_PATH = ROOT_DIR / timestamp_str
 SNAPSHOT_PATH = ROOT_DIR / "tests/snapshots/gpe_snapshot"
 
 RTOL = 1e-5
@@ -118,14 +120,13 @@ def test_wavefunction_normalization():
                     output_file, dtype=np.complex64, count=slice_size
                 )
 
-                snapshot_array_2d = snapshot_flat_slice.reshape((height, width))
                 output_array_2d = output_flat_slice.reshape((height, width))
-                probability_sum = np.sum(np.abs(snapshot_array_2d) ** 2) * (dx * dy)
+                probability_sum = np.sum(np.abs(output_array_2d) ** 2) * (dx * dy)
                 npt.assert_allclose(
                     probability_sum,
                     1.0,
                     rtol=RTOL,
-                    err_msg="Total probability is not 1",
+                    err_msg="Total probability is not 1 on iteartion %s" % current_iter,
                 )
 
                 current_iter += 1

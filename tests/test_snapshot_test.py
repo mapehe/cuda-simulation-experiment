@@ -6,10 +6,12 @@ import json
 import numpy.testing as npt
 import os
 from .util import read_binary_snapshots
+import time
 
 
 ROOT_DIR = Path(__file__).parent.parent
-OUTPUT_PATH = ROOT_DIR / "test_test_output"
+timestamp_str = "test_test_output_%s" % time.strftime("%Y%m%d_%H%M%S")
+OUTPUT_PATH = ROOT_DIR / timestamp_str
 SNAPSHOT_PATH = ROOT_DIR / "tests/snapshots/test_snapshot"
 config_path = ROOT_DIR / "configOverrides.json"
 
