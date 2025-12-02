@@ -4,27 +4,12 @@
 #include <thrust/functional.h>
 #include <thrust/transform_reduce.h>
 
-struct SquareMagnitude {
-  __host__ __device__ float operator()(const cuFloatComplex &x) const {
-    return cuCrealf(x) * cuCrealf(x) + cuCimagf(x) * cuCimagf(x);
-  }
-};
-
-__global__ void scaleWavefunction(cuFloatComplex *d_psi, int totalElements,
-                                  float scale) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx < totalElements) {
-    d_psi[idx].x *= scale;
-    d_psi[idx].y *= scale;
-  }
-}
-
 void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid,
                   GaussianArgs args) {
   int width = args.width;
   int height = args.height;
-  int dx = args.dx;
-  int dy = args.dy;
+  float dx = args.dx;
+  float dy = args.dy;
 
   int numElements = width * height;
 
@@ -35,11 +20,15 @@ void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid,
 
   float currentProbability = sumSq * dx * dy;
 
-  if (currentProbability == 0.0f)
-    return; // Safety check
+  if (currentProbability == 0.0f) return;
+
   float scaleFactor = 1.0f / sqrtf(currentProbability);
 
-  scaleWavefunction<<<grid, block>>>(d_psi, numElements, scaleFactor);
+  thrust::transform(th_psi, th_psi + numElements, th_psi,
+      [scaleFactor] __device__ (cuFloatComplex val) {
+          return make_cuFloatComplex(val.x * scaleFactor, val.y * scaleFactor);
+      });
+
   cudaDeviceSynchronize();
 }
 

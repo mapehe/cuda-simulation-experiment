@@ -40,7 +40,7 @@ rsync -avz \
   --exclude 'build_source' \
   --exclude '*.o' \
   --exclude '__pycache__' \
-  ./src ./include Makefile config*.json requirements.txt ./scripts ./tests \
+  ./src ./src-test ./include Makefile config*.json requirements.txt ./scripts ./tests \
   cuda-gpu:~/build_source/
 
 if $HAS_UPLOAD; then

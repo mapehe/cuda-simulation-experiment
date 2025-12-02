@@ -34,6 +34,11 @@ _Note: Wait a few minutes after creation._
 ```bash
 ./scripts/cloud/ssh_instance.sh
 ```
+When connected you need to install `libgtest-dev` to enable unit testing.
+```bash
+sudo apt-get update
+sudo apt-get install libgtest-dev
+```
 
 ### 3. Run
 

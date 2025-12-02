@@ -38,6 +38,12 @@ struct KineticInitArgs {
   float dt;
 };
 
+struct SquareMagnitude {
+  __host__ __device__ float operator()(const cuFloatComplex &x) const {
+    return cuCrealf(x) * cuCrealf(x) + cuCimagf(x) * cuCimagf(x);
+  }
+};
+
 // --- Wavefunction Operations ---
 __global__ void initGaussian(cuFloatComplex *d_psi, GaussianArgs args);
 

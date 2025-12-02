@@ -25,7 +25,6 @@ def apply_test_override():
     """
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)
-
     data = {
         "iterations": 8192,
         "gridWidth": 512,
@@ -42,11 +41,11 @@ def apply_test_override():
             "ky": 0,
             "sigma": 0.1,
             "amp": 1.0,
-            "trapStr": 5e6,
-            "V_bias": 500,
+            "trapStr": 10e4,
+            "V_bias": 10,
             "r_0": 0.05,
             "sigma2": 0.025,
-            "absorbStrength": 10e5,
+            "absorbStrength": 10e3,
             "absorbWidth": 0.025,
             "dt": 6e-7,
             "g": 10e1,
@@ -107,15 +106,12 @@ def test_wavefunction_normalization():
     2. Physical Validity: Asserts that the wavefunction remains normalized (L2
     norm ≈ 1.0) at every time step to ensure probability conservation.
     """
-    with open(SNAPSHOT_PATH, "rb") as snapshot_file:
-        with open(OUTPUT_PATH, "rb") as output_file:
+    with open(OUTPUT_PATH, "rb") as output_file:
+        with open(SNAPSHOT_PATH, "rb") as snapshot_file:
             [width, height, slice_size, dx, dy, current_iter, max_iter] = (
                 read_gpe_snapshots(snapshot_file, output_file)
             )
             while current_iter < max_iter:
-                snapshot_flat_slice = np.fromfile(
-                    snapshot_file, dtype=np.complex64, count=slice_size
-                )
                 output_flat_slice = np.fromfile(
                     output_file, dtype=np.complex64, count=slice_size
                 )

@@ -16,16 +16,15 @@
     "sigma": 0.1,
     "amp": 1.0,
 
-    "trapStr": 5e6,
-    "V_bias": 500,
+    "trapStr": 10e4,
+    "V_bias": 10,
     "r_0": 0.05,
     "sigma2": 0.025,
 
-    "absorbStrength": 5e4,
+    "absorbStrength": 10e3,
     "absorbWidth": 0.025,
 
     "dt": 6e-7,
     "g": 10e1
   }
-
 }
