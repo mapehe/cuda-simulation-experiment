@@ -1,5 +1,4 @@
 #include "kernel/quantum/quantumKernels.cuh"
-#include "kernel/util.cuh"
 
 __global__ void evolveRealSpace(cuFloatComplex *d_psi, cuFloatComplex *d_V,
                                 int width, int height, float g, float dt) {

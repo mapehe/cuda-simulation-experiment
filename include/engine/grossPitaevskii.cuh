@@ -25,7 +25,7 @@ private:
   float g;
   cufftHandle plan;
 
-  std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs>
+  std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>
   createSimulationArgs(const Params &p, float dt) const;
 };
 

@@ -1,11 +1,15 @@
 #include "kernel/quantum/quantumKernels.cuh"
-#include "kernel/util.cuh"
 
-__global__ void initComplexPotential(cuComplex *d_V_tot, PotentialArgs args) {
+__global__ void initComplexPotential(cuComplex *d_V_tot, PotentialArgs args,
+                                     Grid grid) {
   const auto [width, height, dx, dy, trapFreqSq, V_bias, r_0, sigma,
               absorb_strength, absorb_width] = args;
   int idx = get_flat_index({.width = width, .height = height});
-  auto [nx, ny] = get_normalized_coords({.width = width, .height = height});
+
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  int j = threadIdx.y + blockIdx.y * blockDim.y;
+
+  auto [nx, ny] = get_normalized_coords(i, j, grid);
 
   float r = sqrtf(nx * nx + ny * ny);
 

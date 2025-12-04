@@ -1,19 +1,14 @@
 #ifndef QUANTUM_KERNELS_H
 #define QUANTUM_KERNELS_H
 
+#include "kernel/util.cuh"
 #include <cuComplex.h>
 #include <cuda_runtime.h>
 
 struct GaussianArgs {
-  int width;
-  int height;
-  float dx;
-  float dy;
   float x0;
   float y0;
   float sigma;
-  float kx;
-  float ky;
   float amplitude;
 };
 
@@ -44,16 +39,15 @@ struct SquareMagnitude {
   }
 };
 
-// --- Wavefunction Operations ---
-__global__ void initGaussian(cuFloatComplex *d_psi, GaussianArgs args);
+__global__ void initGaussian(cuFloatComplex *d_psi, GaussianArgs args,
+                             Grid grid);
 
 void normalizePsi(cuFloatComplex *d_psi, dim3 block, dim3 grid,
-                  GaussianArgs args);
+                  GaussianArgs args, Grid gridArgs);
 
-// --- Potential / Environment ---
-__global__ void initComplexPotential(cuComplex *d_V_tot, PotentialArgs args);
+__global__ void initComplexPotential(cuComplex *d_V_tot, PotentialArgs args,
+                                     Grid grid);
 
-// --- Time Evolution (Split-Step) ---
 __global__ void initKineticOperator(cuFloatComplex *d_expK,
                                     KineticInitArgs args);
 

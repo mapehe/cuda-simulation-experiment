@@ -10,8 +10,12 @@ __host__ __device__ inline int get_flat_index(int x, int y, int gridWidth) {
 __global__ void testKernel(cuFloatComplex *d_array, int gridWidth,
                            int gridHeight, int time) {
   int idx = get_flat_index({.width = gridWidth, .height = gridHeight});
-  auto [nx, ny] =
-      get_normalized_coords({.width = gridWidth, .height = gridHeight});
+
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  int j = threadIdx.y + blockIdx.y * blockDim.y;
+
+  auto [nx, ny] = get_normalized_coords(
+      i, j, {.width = gridWidth, .height = gridHeight, .L_x = 1, .L_y = 1});
 
   const float r = sqrtf(nx * nx + ny * ny);
 

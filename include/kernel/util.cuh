@@ -2,12 +2,19 @@
 #define UTIL_KERNELS
 #include <assert.h>
 
-struct Grid {
+struct tmpGrid {
   int width;
   int height;
 };
 
-__device__ __forceinline__ int get_flat_index(Grid args) {
+struct Grid {
+  int width;
+  int height;
+  float L_x;
+  float L_y;
+};
+
+__device__ __forceinline__ int get_flat_index(tmpGrid args) {
   const auto [width, height] = args;
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -23,17 +30,14 @@ struct Coords {
   float y;
 };
 
-__device__ __forceinline__ Coords get_normalized_coords(Grid grid) {
-  const auto [width, height] = grid;
+__device__ __forceinline__ Coords get_normalized_coords(int i, int j,
+                                                        Grid grid) {
+  const auto [width, height, L_x, L_y] = grid;
 
-  int i = threadIdx.x + blockIdx.x * blockDim.x;
-  int j = threadIdx.y + blockIdx.y * blockDim.y;
+  const float x_uc = 2.0f * i / (width - 1.0f) - 1.0f;
+  const float y_uc = 1.0f - 2.0f * j / (height - 1.0f);
 
-  const float center_x = width / 2.0f;
-  const float center_y = height / 2.0f;
-  const float scale = fminf((float)width, (float)height) / 2.0f;
-
-  return {.x = (i - center_x) / scale, .y = (center_y - j) / scale};
+  return {.x = L_x * x_uc, .y = L_y * y_uc};
 }
 
 #endif
