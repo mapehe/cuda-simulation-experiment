@@ -47,19 +47,11 @@ __global__ void initKineticOperator(cuFloatComplex *d_expK,
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-  float kx;
-  if (i <= width / 2) {
-    kx = i * dk_x;
-  } else {
-    kx = (i - width) * dk_x;
-  }
+  float kx_val = (i <= width / 2) ? (float)i : (float)(i - width);
+  float ky_val = (j <= height / 2) ? (float)j : (float)(j - height);
 
-  float ky;
-  if (j <= height / 2) {
-    ky = j * dk_y;
-  } else {
-    ky = (j - height) * dk_y;
-  }
+  float kx = kx_val * dk_x;
+  float ky = ky_val * dk_y;
 
   float k2 = kx * kx + ky * ky;
   float angle = -0.5f * k2 * dt;

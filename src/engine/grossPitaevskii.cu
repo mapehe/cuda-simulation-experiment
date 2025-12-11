@@ -4,8 +4,8 @@
 std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>
 GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
 
-  float L_x = width * dx;
-  float L_y = height * dy;
+  float L_x = p.grossPitaevskii.L;
+  float L_y = p.grossPitaevskii.L;
 
   float dk_x = (2.0f * M_PI) / L_x;
   float dk_y = (2.0f * M_PI) / L_y;
