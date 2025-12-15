@@ -19,10 +19,6 @@ private:
   cuFloatComplex *d_psi;
   cuFloatComplex *d_V;
   cuFloatComplex *d_expK;
-  float dx;
-  float dy;
-  float dt;
-  float g;
   cufftHandle plan;
 
   std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>

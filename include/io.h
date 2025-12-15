@@ -27,15 +27,7 @@ inline void saveToBinaryJSON(const SaveOptions &opts) {
   if (!out)
     throw std::runtime_error("Could not open file");
 
-  json j;
-  j["width"] = width;
-  j["height"] = height;
-  j["iterations"] = iterations;
-  j["downloadFrequency"] = downloadFrequency;
-  j["parameterData"] = parameterData;
-  j["dtype"] = "cuFloatComplex";
-
-  std::string header = j.dump();
+  std::string header = parameterData.dump();
   out.write(header.c_str(), header.size());
   out.write("\n", 1);
 

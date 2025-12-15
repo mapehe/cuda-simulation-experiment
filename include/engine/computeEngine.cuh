@@ -7,10 +7,7 @@
 
 template <typename T> class ComputeEngine {
 protected:
-  int width;
-  int height;
-  int iterations;
-  int downloadFrequency;
+  const Params params;
   int downloadIterator;
   dim3 grid;
   dim3 block;
@@ -22,8 +19,7 @@ protected:
 
 public:
   explicit ComputeEngine(const Params &p)
-      : width(p.gridWidth), height(p.gridHeight), iterations(p.iterations),
-        downloadFrequency(p.downloadFrequency), downloadIterator(1) {
+      : params(p), downloadIterator(1) {
     grid = dim3(p.threadsPerBlockX, p.threadsPerBlockY);
     block = dim3((p.gridWidth + grid.x - 1) / grid.x,
                  (p.gridHeight + grid.y - 1) / grid.y);
@@ -37,7 +33,7 @@ public:
     downloadIterator--;
     if (downloadIterator == 0) {
       appendFrame(historyData);
-      downloadIterator = downloadFrequency;
+      downloadIterator = params.downloadFrequency;
     }
 
     solveStep(t);

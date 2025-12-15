@@ -2,7 +2,7 @@
 #include "io.h"
 
 TestEngine::TestEngine(const Params &p) : ComputeEngine(p), d_grid(nullptr) {
-  size_t size = width * height * sizeof(cuFloatComplex);
+  size_t size = params.gridWidth * params.gridHeight * sizeof(cuFloatComplex);
   cudaError_t err = cudaMalloc(&d_grid, size);
   if (err != cudaSuccess) {
     throw std::runtime_error("Failed to allocate TestEngine device memory");
@@ -18,7 +18,7 @@ TestEngine::~TestEngine() {
 }
 
 void TestEngine::appendFrame(std::vector<cuFloatComplex> &history) {
-  size_t frame_elements = width * height;
+  size_t frame_elements = params.gridWidth * params.gridHeight;
   size_t frame_bytes = frame_elements * sizeof(cuFloatComplex);
   size_t old_size = history.size();
 
@@ -28,15 +28,15 @@ void TestEngine::appendFrame(std::vector<cuFloatComplex> &history) {
 }
 
 void TestEngine::solveStep(int t) {
-  testKernel<<<grid, block>>>(d_grid, width, height, t);
+  testKernel<<<grid, block>>>(d_grid, params.gridWidth, params.gridHeight, t);
   cudaDeviceSynchronize();
 }
 
 void TestEngine::saveResults(const std::string &filename) {
   saveToBinaryJSON({.filename = filename,
                     .data = historyData,
-                    .width = width,
-                    .height = height,
-                    .iterations = iterations,
-                    .downloadFrequency = downloadFrequency});
+                    .width = params.gridWidth,
+                    .height = params.gridHeight,
+                    .iterations = params.iterations,
+                    .downloadFrequency = params.downloadFrequency});
 }

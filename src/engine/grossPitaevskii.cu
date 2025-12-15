@@ -4,6 +4,9 @@
 std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>
 GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
 
+  float dx = ((float)p.grossPitaevskii.L) / p.gridWidth;
+  float dy = ((float)p.grossPitaevskii.L) / p.gridHeight;
+
   float L_x = p.grossPitaevskii.L;
   float L_y = p.grossPitaevskii.L;
 
@@ -15,8 +18,8 @@ GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
                         .sigma = p.grossPitaevskii.sigma,
                         .amplitude = p.grossPitaevskii.amp};
 
-  PotentialArgs pArgs = {.width = width,
-                         .height = height,
+  PotentialArgs pArgs = {.width = params.gridWidth,
+                         .height = params.gridHeight,
                          .dx = dx,
                          .dy = dy,
                          .trapFreqSq = p.grossPitaevskii.trapStr,
@@ -27,20 +30,18 @@ GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
                          .absorb_width = p.grossPitaevskii.absorbWidth};
 
   KineticInitArgs kArgs = {
-      .width = width, .height = height, .dk_x = dk_x, .dk_y = dk_y, .dt = dt};
+      .width = p.gridWidth, .height = p.gridHeight, .dk_x = dk_x, .dk_y = dk_y, .dt = dt};
 
-  Grid grid = {.width = width, .height = height, .L_x = L_x, .L_y = L_y};
+  Grid grid = {.width = p.gridWidth, .height = p.gridHeight, .L_x = L_x, .L_y = L_y};
 
   return {gArgs, pArgs, kArgs, grid};
 }
 
 GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
-    : ComputeEngine(p), dt(p.grossPitaevskii.dt), g(p.grossPitaevskii.g),
-      dx(p.grossPitaevskii.L / p.gridWidth),
-      dy(p.grossPitaevskii.L / p.gridHeight) {
-  cufftPlan2d(&plan, height, width, CUFFT_C2C);
+    : ComputeEngine(p) {
+  cufftPlan2d(&plan, params.gridHeight, params.gridWidth, CUFFT_C2C);
 
-  size_t num_pixels = width * height;
+  size_t num_pixels = params.gridWidth * params.gridHeight;
   size_t size_bytes = num_pixels * sizeof(cuFloatComplex);
 
   cudaMalloc(&d_psi, size_bytes);
@@ -52,7 +53,7 @@ GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
   cudaMalloc(&d_expK, size_bytes);
   cudaMemset(d_expK, 0, size_bytes);
 
-  const auto [gArgs, pArgs, kArgs, gridArgs] = createSimulationArgs(p, dt);
+  const auto [gArgs, pArgs, kArgs, gridArgs] = createSimulationArgs(p, params.grossPitaevskii.dt);
 
   initGaussian<<<grid, block>>>(d_psi, gArgs, gridArgs);
   cudaDeviceSynchronize();
@@ -87,7 +88,7 @@ GrossPitaevskiiEngine::~GrossPitaevskiiEngine() {
 }
 
 void GrossPitaevskiiEngine::appendFrame(std::vector<cuFloatComplex> &history) {
-  size_t frame_elements = width * height;
+  size_t frame_elements = params.gridWidth * params.gridHeight;
   size_t frame_bytes = frame_elements * sizeof(cuFloatComplex);
   size_t old_size = history.size();
 
@@ -97,24 +98,26 @@ void GrossPitaevskiiEngine::appendFrame(std::vector<cuFloatComplex> &history) {
 }
 
 void GrossPitaevskiiEngine::solveStep(int t) {
-  float fft_scale = 1.0f / (float)(width * height);
+  float fft_scale = 1.0f / (float)(params.gridWidth * params.gridHeight);
 
-  evolveRealSpace<<<grid, block>>>(d_psi, d_V, width, height, g, dt / 2.0f);
+  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.gridWidth, params.gridHeight, params.grossPitaevskii.g, params.grossPitaevskii.dt / 2.0f);
   cufftExecC2C(plan, d_psi, d_psi, CUFFT_FORWARD);
-  evolveMomentumSpace<<<grid, block>>>(d_psi, d_expK, width, height, fft_scale);
+  evolveMomentumSpace<<<grid, block>>>(d_psi, d_expK, params.gridWidth, params.gridHeight, fft_scale);
   cufftExecC2C(plan, d_psi, d_psi, CUFFT_INVERSE);
-  evolveRealSpace<<<grid, block>>>(d_psi, d_V, width, height, g, dt / 2.0f);
+  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.gridWidth, params.gridHeight, params.grossPitaevskii.g, params.grossPitaevskii.dt / 2.0f);
   cudaDeviceSynchronize();
 }
 
 void GrossPitaevskiiEngine::saveResults(const std::string &filename) {
+  float dx = ((float)params.grossPitaevskii.L) / params.gridWidth;
+  float dy = ((float)params.grossPitaevskii.L) / params.gridHeight;
   json parameterData = {{"dx", dx}, {"dy", dy}};
 
   saveToBinaryJSON({.filename = filename,
                     .data = historyData,
-                    .width = width,
-                    .height = height,
-                    .iterations = iterations,
-                    .downloadFrequency = downloadFrequency,
+                    .width = params.gridWidth,
+                    .height = params.gridHeight,
+                    .iterations = params.iterations,
+                    .downloadFrequency = params.downloadFrequency,
                     .parameterData = parameterData});
 }
