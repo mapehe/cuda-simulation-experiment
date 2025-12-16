@@ -24,9 +24,7 @@ void run(json config) {
   const Params params = preprocessParams(config);
   auto sim = getComputeEngine<cuFloatComplex>(params);
 
-  for (int t = 0; t < params.iterations; ++t) {
-    sim->step(t);
-  }
+  sim->run();
 
   std::cout << "[CPU] Simulation complete." << std::endl;
   sim->saveResults(params.output);

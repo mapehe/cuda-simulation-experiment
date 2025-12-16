@@ -11,16 +11,22 @@ using json = nlohmann::json;
 
 enum class SimulationMode { Test, GrossPitaevskii };
 
+struct SimulationModeMap {
+  static const std::unordered_map<std::string, SimulationMode> &get() {
+    static const std::unordered_map<std::string, SimulationMode> map{
+        {"test", SimulationMode::Test},
+        {"grossPitaevskii", SimulationMode::GrossPitaevskii},
+    };
+    return map;
+  }
+};
+
 inline void from_json(const nlohmann::json &j, SimulationMode &mode) {
-  static const std::unordered_map<std::string, SimulationMode> str_to_enum{
-      {"test", SimulationMode::Test},
-      {"grossPitaevskii", SimulationMode::GrossPitaevskii},
-  };
-
   const std::string s = j.get<std::string>();
-  auto it = str_to_enum.find(s);
+  const auto &map = SimulationModeMap::get();
 
-  if (it != str_to_enum.end()) {
+  auto it = map.find(s);
+  if (it != map.end()) {
     mode = it->second;
   } else {
     throw nlohmann::json::type_error::create(
@@ -28,7 +34,26 @@ inline void from_json(const nlohmann::json &j, SimulationMode &mode) {
   }
 }
 
+struct CommonParams {
+  int iterations;
+  int gridWidth;
+  int gridHeight;
+  int threadsPerBlockX;
+  int threadsPerBlockY;
+  int downloadFrequency;
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(CommonParams, iterations, gridWidth,
+                                 gridHeight, threadsPerBlockY, threadsPerBlockY,
+                                 downloadFrequency)
+};
+
 struct GrossPitaevskiiParams {
+  int iterations;
+  int gridWidth;
+  int gridHeight;
+  int threadsPerBlockX;
+  int threadsPerBlockY;
+  int downloadFrequency;
   float L;
   float sigma;
   float x0;
@@ -47,18 +72,19 @@ struct GrossPitaevskiiParams {
   float sigma2;
   float absorbStrength;
   float absorbWidth;
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE(GrossPitaevskiiParams, iterations, gridWidth,
+                                 gridHeight, threadsPerBlockY, threadsPerBlockY,
+                                 downloadFrequency, L, sigma, x0, y0, kx, ky,
+                                 amp, omega, trapStr, dt, g, V_bias, r_0,
+                                 sigma2, absorbStrength, absorbWidth)
 };
 
 struct Params {
-  int iterations;
-  int gridWidth;
-  int gridHeight;
-  int threadsPerBlockX;
-  int threadsPerBlockY;
-  int downloadFrequency;
   std::string output;
   SimulationMode simulationMode;
 
+  CommonParams test;
   GrossPitaevskiiParams grossPitaevskii;
 };
 

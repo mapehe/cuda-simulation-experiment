@@ -1,3 +1,4 @@
+#include "config.h"
 #include "json.hpp"
 #include "simulation.h"
 #include "tclap/CmdLine.h"
@@ -52,8 +53,19 @@ json parseArguments(int argc, char **argv) {
     TCLAP::ValueArg<std::string> outputArg("o", "output", "Path to output file",
                                            true, "", "string");
     cmd.add(outputArg);
+
+    std::vector<std::string> allowedModes;
+    for (const auto &pair : SimulationModeMap::get()) {
+      allowedModes.push_back(pair.first);
+    }
+    TCLAP::ValuesConstraint<std::string> modeConstraint(allowedModes);
+    TCLAP::ValueArg<std::string> modeArg("m", "mode", "Simulation Mode", true,
+                                         "test", &modeConstraint);
+    cmd.add(modeArg);
+
     cmd.parse(argc, argv);
-    return json{{"output", outputArg.getValue()}};
+    return json{{"output", outputArg.getValue()},
+                {"simulationMode", modeArg.getValue()}};
 
   } catch (TCLAP::ArgException &e) {
     std::cerr << "error: " << e.error() << " for arg " << e.argId()

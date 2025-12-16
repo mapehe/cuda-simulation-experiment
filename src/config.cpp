@@ -4,142 +4,84 @@
 #include <string>
 #include <string_view>
 
-inline const nlohmann::json &get_nested(const nlohmann::json &j,
-                                        const std::string &key) {
-  const nlohmann::json *ptr = &j;
-
-  for (auto part_view : std::string_view(key) | std::views::split('.')) {
-    std::string part;
-    for (char c : part_view) {
-      part.push_back(c);
-    }
-
-    ptr = &ptr->at(part);
+template <typename T, typename Validator>
+T parse(const json &j, const std::string &key, Validator validator,
+        const char *errMsg) {
+  if (!j.contains(key)) {
+    throw std::runtime_error("Missing key: " + key);
   }
 
-  return *ptr;
+  T val = j.at(key).get<T>();
+
+  if (!validator(val)) {
+    throw std::runtime_error("Key '" + key + "' " + errMsg);
+  }
+
+  return val;
 }
-
-template <typename T>
-void get_and_validate_param(T &config_field, const json &j,
-                            const std::string &key,
-                            std::function<bool(const T &)> validator,
-                            const std::string &validation_error_message) {
-  try {
-    const auto &val = get_nested(j, key);
-    config_field = val.get<T>();
-  } catch (const nlohmann::json::type_error &e) {
-    throw std::runtime_error(
-        "Params Error: Field '" + key +
-        "' is missing or has wrong type. Details: " + e.what());
-  }
-
-  if (!validator(config_field)) {
-    throw std::runtime_error("Params Error: '" + key + "' " +
-                             validation_error_message);
-  }
-}
-
-inline constexpr auto is_positive = [](auto const &x) { return x > 0; };
-inline constexpr auto is_non_negtive = [](auto const &x) { return !(x < 0); };
-inline constexpr auto always_true = [](auto const &) { return true; };
 
 Params preprocessParams(const json &j) {
-  std::cout << "[Preprocess] Validating and calculating launch parameters..."
-            << std::endl;
+  std::cout << "[Preprocess] Validating and calculating launch parameters...\n";
 
-  Params config;
+  const char *pos_err = "must be positive";
+  const char *non_neg_err = "must be non-negative";
 
-  const char *const positive_number_message = "must be a positive number.";
-  const char *const non_negtive_number_message = "must not be negative.";
+  auto is_pos = [](auto v) { return v > 0; };
+  auto is_non_neg = [](auto v) { return v >= 0; };
+  auto any = [](auto) { return true; };
+  auto mode_ok = [](const SimulationMode &) { return true; };
 
-  const auto is_not_empty = [](const std::string &val) { return !val.empty(); };
-  const char *const not_empty_message = "cannot be empty.";
+  const auto &testJson = j.at("test");
+  const auto &gpJson = j.at("grossPitaevskii");
 
-  const auto modeValidator = [](const SimulationMode &m) { return true; };
+  return Params{
+      .output = parse<std::string>(j, "output", any, ""),
+      .simulationMode = parse<SimulationMode>(j, "simulationMode", mode_ok, ""),
 
-  get_and_validate_param<int>(config.iterations, j, "iterations", is_positive,
-                              positive_number_message);
+      .test =
+          {
+              .iterations = parse<int>(testJson, "iterations", is_pos, pos_err),
+              .gridWidth = parse<int>(testJson, "gridWidth", is_pos, pos_err),
+              .gridHeight = parse<int>(testJson, "gridHeight", is_pos, pos_err),
+              .threadsPerBlockX =
+                  parse<int>(testJson, "threadsPerBlockX", is_pos, pos_err),
+              .threadsPerBlockY =
+                  parse<int>(testJson, "threadsPerBlockY", is_pos, pos_err),
+              .downloadFrequency =
+                  parse<int>(testJson, "downloadFrequency", is_pos, pos_err),
+          },
 
-  get_and_validate_param<int>(config.gridWidth, j, "gridWidth", is_positive,
-                              positive_number_message);
+      .grossPitaevskii = {
+          .iterations = parse<int>(gpJson, "iterations", is_pos, pos_err),
+          .gridWidth = parse<int>(gpJson, "gridWidth", is_pos, pos_err),
+          .gridHeight = parse<int>(gpJson, "gridHeight", is_pos, pos_err),
+          .threadsPerBlockX =
+              parse<int>(gpJson, "threadsPerBlockX", is_pos, pos_err),
+          .threadsPerBlockY =
+              parse<int>(gpJson, "threadsPerBlockY", is_pos, pos_err),
+          .downloadFrequency =
+              parse<int>(gpJson, "downloadFrequency", is_pos, pos_err),
 
-  get_and_validate_param<int>(config.gridHeight, j, "gridHeight", is_positive,
-                              positive_number_message);
+          .L = parse<float>(gpJson, "L", is_pos, pos_err),
+          .sigma = parse<float>(gpJson, "sigma", is_pos, pos_err),
+          .x0 = parse<float>(gpJson, "x0", any, ""),
+          .y0 = parse<float>(gpJson, "y0", any, ""),
+          .kx = parse<float>(gpJson, "kx", any, ""),
+          .ky = parse<float>(gpJson, "ky", any, ""),
+          .amp = parse<float>(gpJson, "amp", any, ""),
+          .omega = parse<float>(gpJson, "omega", is_non_neg, non_neg_err),
+          .trapStr = parse<float>(gpJson, "trapStr", is_non_neg, non_neg_err),
 
-  get_and_validate_param<int>(config.downloadFrequency, j, "downloadFrequency",
-                              is_positive, positive_number_message);
+          .dt = parse<float>(gpJson, "dt", is_pos, pos_err),
+          .g = parse<float>(gpJson, "g", any, ""),
 
-  get_and_validate_param<int>(config.threadsPerBlockX, j, "threadsPerBlockX",
-                              is_positive, positive_number_message);
+          .V_bias = parse<float>(gpJson, "V_bias", is_non_neg, non_neg_err),
+          .r_0 = parse<float>(gpJson, "r_0", is_non_neg, non_neg_err),
+          .sigma2 = parse<float>(gpJson, "sigma2", is_non_neg, non_neg_err),
+          .absorbStrength =
+              parse<float>(gpJson, "absorbStrength", is_non_neg, non_neg_err),
+          .absorbWidth =
+              parse<float>(gpJson, "absorbWidth", is_non_neg, non_neg_err),
 
-  get_and_validate_param<int>(config.threadsPerBlockY, j, "threadsPerBlockY",
-                              is_positive, positive_number_message);
-
-  get_and_validate_param<std::string>(config.output, j, "output", is_not_empty,
-                                      not_empty_message);
-
-  get_and_validate_param<SimulationMode>(config.simulationMode, j,
-                                         "simulationMode", modeValidator,
-                                         not_empty_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.L, j,
-                                "grossPitaevskii.L", is_positive,
-                                positive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.sigma, j,
-                                "grossPitaevskii.sigma", is_positive,
-                                positive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.x0, j,
-                                "grossPitaevskii.x0", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.y0, j,
-                                "grossPitaevskii.y0", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.kx, j,
-                                "grossPitaevskii.kx", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.ky, j,
-                                "grossPitaevskii.ky", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.amp, j,
-                                "grossPitaevskii.amp", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.trapStr, j,
-                                "grossPitaevskii.trapStr", is_non_negtive,
-                                non_negtive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.g, j,
-                                "grossPitaevskii.g", always_true, "");
-
-  get_and_validate_param<float>(config.grossPitaevskii.dt, j,
-                                "grossPitaevskii.dt", is_positive,
-                                positive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.V_bias, j,
-                                "grossPitaevskii.V_bias", is_non_negtive,
-                                non_negtive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.r_0, j,
-                                "grossPitaevskii.r_0", is_non_negtive,
-                                non_negtive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.sigma2, j,
-                                "grossPitaevskii.sigma2", is_non_negtive,
-                                non_negtive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.absorbStrength, j,
-                                "grossPitaevskii.absorbStrength",
-                                is_non_negtive, non_negtive_number_message);
-
-  get_and_validate_param<float>(config.grossPitaevskii.absorbWidth, j,
-                                "grossPitaevskii.absorbWidth", is_non_negtive,
-                                non_negtive_number_message);
-
-  std::cout << "[Preprocess] Simulation configured to run for "
-            << config.iterations << " iterations on a " << config.gridWidth
-            << " x " << config.gridHeight << " grid." << std::endl;
-
-  return config;
+      }};
 }

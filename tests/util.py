@@ -17,8 +17,8 @@ def read_binary_snapshots(snapshot_file, output_file):
     header_line = output_file.readline()
     output_header_data = json.loads(header_line)
 
-    output_width = int(output_header_data["width"])
-    output_height = int(output_header_data["height"])
+    output_width = int(output_header_data["gridWidth"])
+    output_height = int(output_header_data["gridHeight"])
     output_iterations = int(output_header_data["iterations"])
     output_downloadFrequency = int(output_header_data["downloadFrequency"])
 

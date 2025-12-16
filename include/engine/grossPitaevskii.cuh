@@ -14,6 +14,8 @@ public:
   void solveStep(int t) override;
   void appendFrame(std::vector<cuFloatComplex> &history) override;
   void saveResults(const std::string &filename) override;
+  int getDownloadFrequency() override;
+  int getTotalSteps() override;
 
 private:
   cuFloatComplex *d_psi;
@@ -23,6 +25,9 @@ private:
 
   std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>
   createSimulationArgs(const Params &p, float dt) const;
+
+  dim3 grid;
+  dim3 block;
 };
 
 #endif

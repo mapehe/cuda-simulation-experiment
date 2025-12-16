@@ -16,24 +16,23 @@ struct SaveOptions {
   int height;
   int iterations;
   int downloadFrequency;
-  json parameterData;
+  json header;
 };
 
 inline void saveToBinaryJSON(const SaveOptions &opts) {
   const auto &[filename, data, width, height, iterations, downloadFrequency,
-               parameterData] = opts;
+               header] = opts;
 
   std::ofstream out(filename, std::ios::out | std::ios::binary);
   if (!out)
     throw std::runtime_error("Could not open file");
 
-  std::string header = parameterData.dump();
-  out.write(header.c_str(), header.size());
+  std::string headerStr = header.dump();
+  out.write(headerStr.c_str(), headerStr.size());
   out.write("\n", 1);
 
   out.write(reinterpret_cast<const char *>(data.data()),
             data.size() * sizeof(cuFloatComplex));
-
   out.close();
 }
 

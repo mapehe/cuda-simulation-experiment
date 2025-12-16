@@ -37,7 +37,7 @@ _Note: Wait a few minutes after creation._
 When connected you need to install `libgtest-dev` to enable unit testing.
 ```bash
 sudo apt-get update
-sudo apt-get install libgtest-dev
+sudo apt-get install -y libgtest-dev
 ```
 
 ### 3. Run

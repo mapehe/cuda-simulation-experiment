@@ -1,19 +1,27 @@
 {
-  "iterations": 8192,
-  "gridWidth": 512,
-  "gridHeight": 512,
-  "threadsPerBlockX": 32,
-  "threadsPerBlockY": 32,
-  "downloadFrequency": 32,
   "simulationMode": "grossPitaevskii",
-
+  "test": {
+    "iterations": 8192,
+    "gridWidth": 512,
+    "gridHeight": 512,
+    "threadsPerBlockX": 32,
+    "threadsPerBlockY": 32,
+    "downloadFrequency": 32
+  },
   "grossPitaevskii": {
+    "iterations": 8192,
+    "gridWidth": 512,
+    "gridHeight": 512,
+    "threadsPerBlockX": 32,
+    "threadsPerBlockY": 32,
+    "downloadFrequency": 32,
     "L": 1.0,
     "x0": 0.15,
     "y0": 0.15,
     "kx": 0,
     "ky": 0,
     "sigma": 0.1,
+    "omega": 0,
     "amp": 1.0,
 
     "trapStr": 10e4,

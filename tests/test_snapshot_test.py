@@ -29,19 +29,22 @@ def apply_test_override():
     os.chdir(project_root)
 
     data = {
-        "simulationMode": "test",
-        "iterations": 8192,
-        "gridWidth": 512,
-        "gridHeight": 512,
-        "threadsPerBlockX": 32,
-        "threadsPerBlockY": 32,
-        "downloadFrequency": 1024,
+        "test": {
+            "iterations": 8192,
+            "gridWidth": 512,
+            "gridHeight": 512,
+            "threadsPerBlockX": 32,
+            "threadsPerBlockY": 32,
+            "downloadFrequency": 1024,
+        }
     }
 
     with open("configOverrides.json", "w") as f:
         json.dump(data, f, indent=4)
 
-    subprocess.run(["./bin/main", "--output", str(OUTPUT_PATH)], check=True)
+    subprocess.run(
+        ["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "test"], check=True
+    )
 
 
 def test_validate_cuda_kernel_output_against_snapshot():

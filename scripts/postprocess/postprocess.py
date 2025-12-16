@@ -37,8 +37,8 @@ with open(filename, "rb") as f:
     header_line = f.readline()
     header_data = json.loads(header_line)
 
-    width = int(header_data["width"])
-    height = int(header_data["height"])
+    width = int(header_data["gridWidth"])
+    height = int(header_data["gridHeight"])
     iterations = int(header_data["iterations"])
     downloadFrequency = int(header_data["downloadFrequency"])
 

@@ -9,6 +9,7 @@ cd "../.."
 HAS_UPLOAD=false
 HAS_UPLOAD_VIDEO=false
 OUTPUT_FILE=""
+SIMULATION_MODE=""
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -20,6 +21,10 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --output) 
             OUTPUT_FILE="$2" 
+            shift
+            ;;
+        --mode) 
+            SIMULATION_MODE="$2" 
             shift
             ;;
         *) 
@@ -45,10 +50,10 @@ rsync -avz \
 
 if $HAS_UPLOAD; then
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} && gcloud storage cp ${OUTPUT_FILE} gs://${STORAGE_BUCKET}/${OUTPUT_FILE}'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE} && gcloud storage cp ${OUTPUT_FILE} gs://${STORAGE_BUCKET}/${OUTPUT_FILE}'"
 else
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE}'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE}'"
 fi
 
 if $HAS_UPLOAD_VIDEO; then

@@ -1,8 +1,8 @@
 #include "kernel/quantum/quantumKernels.cuh"
 #include <cmath>
 #include <complex>
-#include <gtest/gtest.h>
 #include <cstdio>
+#include <gtest/gtest.h>
 
 #define ASSERT_CUDA_SUCCESS(err)                                               \
   ASSERT_EQ(err, cudaSuccess) << "CUDA Error: " << cudaGetErrorString(err)
@@ -18,8 +18,8 @@ protected:
   void SetUp() override {
     numElements = width * height;
 
-    float dk_x = 2.0f * M_PI / ((float) width);
-    float dk_y = 2.0f * M_PI / ((float) height);
+    float dk_x = 2.0f * M_PI / ((float)width);
+    float dk_y = 2.0f * M_PI / ((float)height);
 
     args = {.width = width,
             .height = height,
@@ -62,7 +62,8 @@ TEST_F(EvolutionTest, InitKineticOperatorTest) {
   for (size_t i = 0; i < width; ++i) {
     for (size_t j = 0; j < height; ++j) {
       float kx_val = (i <= width / 2.0f) ? (float)i : ((float)i - (float)width);
-      float ky_val = (j <= height / 2.0f) ? (float)j : ((float)j - (float)height);
+      float ky_val =
+          (j <= height / 2.0f) ? (float)j : ((float)j - (float)height);
 
       float kx = kx_val * args.dk_x;
       float ky = ky_val * args.dk_y;

@@ -4,8 +4,8 @@
 std::tuple<GaussianArgs, PotentialArgs, KineticInitArgs, Grid>
 GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
 
-  float dx = ((float)p.grossPitaevskii.L) / p.gridWidth;
-  float dy = ((float)p.grossPitaevskii.L) / p.gridHeight;
+  float dx = ((float)p.grossPitaevskii.L) / p.grossPitaevskii.gridWidth;
+  float dy = ((float)p.grossPitaevskii.L) / p.grossPitaevskii.gridHeight;
 
   float L_x = p.grossPitaevskii.L;
   float L_y = p.grossPitaevskii.L;
@@ -18,8 +18,8 @@ GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
                         .sigma = p.grossPitaevskii.sigma,
                         .amplitude = p.grossPitaevskii.amp};
 
-  PotentialArgs pArgs = {.width = params.gridWidth,
-                         .height = params.gridHeight,
+  PotentialArgs pArgs = {.width = params.grossPitaevskii.gridWidth,
+                         .height = params.grossPitaevskii.gridHeight,
                          .dx = dx,
                          .dy = dy,
                          .trapFreqSq = p.grossPitaevskii.trapStr,
@@ -29,19 +29,33 @@ GrossPitaevskiiEngine::createSimulationArgs(const Params &p, float dt) const {
                          .absorb_strength = p.grossPitaevskii.absorbStrength,
                          .absorb_width = p.grossPitaevskii.absorbWidth};
 
-  KineticInitArgs kArgs = {
-      .width = p.gridWidth, .height = p.gridHeight, .dk_x = dk_x, .dk_y = dk_y, .dt = dt};
+  KineticInitArgs kArgs = {.width = p.grossPitaevskii.gridWidth,
+                           .height = p.grossPitaevskii.gridHeight,
+                           .dk_x = dk_x,
+                           .dk_y = dk_y,
+                           .dt = dt};
 
-  Grid grid = {.width = p.gridWidth, .height = p.gridHeight, .L_x = L_x, .L_y = L_y};
+  Grid grid = {.width = p.grossPitaevskii.gridWidth,
+               .height = p.grossPitaevskii.gridHeight,
+               .L_x = L_x,
+               .L_y = L_y};
 
   return {gArgs, pArgs, kArgs, grid};
 }
 
 GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
     : ComputeEngine(p) {
-  cufftPlan2d(&plan, params.gridHeight, params.gridWidth, CUFFT_C2C);
 
-  size_t num_pixels = params.gridWidth * params.gridHeight;
+  grid = dim3(p.grossPitaevskii.threadsPerBlockX,
+              p.grossPitaevskii.threadsPerBlockY);
+  block = dim3((p.grossPitaevskii.gridWidth + grid.x - 1) / grid.x,
+               (p.grossPitaevskii.gridHeight + grid.y - 1) / grid.y);
+
+  cufftPlan2d(&plan, params.grossPitaevskii.gridHeight,
+              params.grossPitaevskii.gridWidth, CUFFT_C2C);
+
+  size_t num_pixels =
+      params.grossPitaevskii.gridWidth * params.grossPitaevskii.gridHeight;
   size_t size_bytes = num_pixels * sizeof(cuFloatComplex);
 
   cudaMalloc(&d_psi, size_bytes);
@@ -53,7 +67,8 @@ GrossPitaevskiiEngine::GrossPitaevskiiEngine(const Params &p)
   cudaMalloc(&d_expK, size_bytes);
   cudaMemset(d_expK, 0, size_bytes);
 
-  const auto [gArgs, pArgs, kArgs, gridArgs] = createSimulationArgs(p, params.grossPitaevskii.dt);
+  const auto [gArgs, pArgs, kArgs, gridArgs] =
+      createSimulationArgs(p, params.grossPitaevskii.dt);
 
   initGaussian<<<grid, block>>>(d_psi, gArgs, gridArgs);
   cudaDeviceSynchronize();
@@ -88,7 +103,8 @@ GrossPitaevskiiEngine::~GrossPitaevskiiEngine() {
 }
 
 void GrossPitaevskiiEngine::appendFrame(std::vector<cuFloatComplex> &history) {
-  size_t frame_elements = params.gridWidth * params.gridHeight;
+  size_t frame_elements =
+      params.grossPitaevskii.gridWidth * params.grossPitaevskii.gridHeight;
   size_t frame_bytes = frame_elements * sizeof(cuFloatComplex);
   size_t old_size = history.size();
 
@@ -98,26 +114,40 @@ void GrossPitaevskiiEngine::appendFrame(std::vector<cuFloatComplex> &history) {
 }
 
 void GrossPitaevskiiEngine::solveStep(int t) {
-  float fft_scale = 1.0f / (float)(params.gridWidth * params.gridHeight);
+  float fft_scale = 1.0f / (float)(params.grossPitaevskii.gridWidth *
+                                   params.grossPitaevskii.gridHeight);
 
-  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.gridWidth, params.gridHeight, params.grossPitaevskii.g, params.grossPitaevskii.dt / 2.0f);
+  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.grossPitaevskii.gridWidth,
+                                   params.grossPitaevskii.gridHeight,
+                                   params.grossPitaevskii.g,
+                                   params.grossPitaevskii.dt / 2.0f);
   cufftExecC2C(plan, d_psi, d_psi, CUFFT_FORWARD);
-  evolveMomentumSpace<<<grid, block>>>(d_psi, d_expK, params.gridWidth, params.gridHeight, fft_scale);
+  evolveMomentumSpace<<<grid, block>>>(
+      d_psi, d_expK, params.grossPitaevskii.gridWidth,
+      params.grossPitaevskii.gridHeight, fft_scale);
   cufftExecC2C(plan, d_psi, d_psi, CUFFT_INVERSE);
-  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.gridWidth, params.gridHeight, params.grossPitaevskii.g, params.grossPitaevskii.dt / 2.0f);
+  evolveRealSpace<<<grid, block>>>(d_psi, d_V, params.grossPitaevskii.gridWidth,
+                                   params.grossPitaevskii.gridHeight,
+                                   params.grossPitaevskii.g,
+                                   params.grossPitaevskii.dt / 2.0f);
   cudaDeviceSynchronize();
 }
 
-void GrossPitaevskiiEngine::saveResults(const std::string &filename) {
-  float dx = ((float)params.grossPitaevskii.L) / params.gridWidth;
-  float dy = ((float)params.grossPitaevskii.L) / params.gridHeight;
-  json parameterData = {{"dx", dx}, {"dy", dy}};
+int GrossPitaevskiiEngine::getDownloadFrequency() {
+  return params.grossPitaevskii.downloadFrequency;
+}
 
-  saveToBinaryJSON({.filename = filename,
-                    .data = historyData,
-                    .width = params.gridWidth,
-                    .height = params.gridHeight,
-                    .iterations = params.iterations,
-                    .downloadFrequency = params.downloadFrequency,
-                    .parameterData = parameterData});
+int GrossPitaevskiiEngine::getTotalSteps() {
+  return params.grossPitaevskii.iterations;
+}
+
+void GrossPitaevskiiEngine::saveResults(const std::string &filename) {
+  saveToBinaryJSON(
+      {.filename = filename,
+       .data = historyData,
+       .width = params.grossPitaevskii.gridWidth,
+       .height = params.grossPitaevskii.gridHeight,
+       .iterations = params.grossPitaevskii.iterations,
+       .downloadFrequency = params.grossPitaevskii.downloadFrequency,
+       .header = params.grossPitaevskii});
 }
