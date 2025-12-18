@@ -17,7 +17,7 @@ public:
   int getDownloadFrequency() override;
   int getTotalSteps() override;
 
-private:
+protected:
   cuFloatComplex *d_psi;
   cuFloatComplex *d_V;
   cuFloatComplex *d_expK;
