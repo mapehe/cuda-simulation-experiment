@@ -133,7 +133,8 @@ TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesWavefunctionNorm) {
   float total_diff_sq = 0.0f;
 
   for (size_t i = 0; i < num_elements; ++i) {
-    float abs_sq = (host_psi[i].x * host_psi[i].x) + (host_psi[i].y * host_psi[i].y);
+    float abs_sq =
+        (host_psi[i].x * host_psi[i].x) + (host_psi[i].y * host_psi[i].y);
     total_probability += abs_sq;
 
     float diff_real = host_psi[i].x - host_psi_0[i].x;
@@ -146,12 +147,12 @@ TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesWavefunctionNorm) {
   EXPECT_NEAR(total_probability, 1.0f, 1e-4f)
       << "Unitary violation: Total probability != 1 after evolution.";
 
-  EXPECT_GT(total_diff_sq, 1e-6f)
-      << "Static violation: The wavefunction is identical to the initial state.";
+  EXPECT_GT(total_diff_sq, 1e-6f) << "Static violation: The wavefunction is "
+                                     "identical to the initial state.";
 }
 
 TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesEnergy) {
-  float tolerance_percent = 0.1f; 
+  float tolerance_percent = 0.1f;
   float tolerance_fraction = tolerance_percent / 100.0f;
 
   size_t width = params.grossPitaevskii.gridWidth;
@@ -166,7 +167,7 @@ TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesEnergy) {
   std::vector<cuFloatComplex> host_psi_0(num_elements);
   std::vector<cuFloatComplex> host_psi_final(num_elements);
 
-  auto calculate_energy = [&](const std::vector<cuFloatComplex>& psi) -> float {
+  auto calculate_energy = [&](const std::vector<cuFloatComplex> &psi) -> float {
     float total_energy = 0.0f;
 
     for (int y = 0; y < height; ++y) {
@@ -178,20 +179,23 @@ TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesEnergy) {
 
         float E_interaction = 0.5f * g_interaction * (abs_sq * abs_sq);
 
-        int idx_l = y * width + ((x - 1 + width) % width); // Left
-        int idx_r = y * width + ((x + 1) % width);         // Right
+        int idx_l = y * width + ((x - 1 + width) % width);   // Left
+        int idx_r = y * width + ((x + 1) % width);           // Right
         int idx_u = ((y - 1 + height) % height) * width + x; // Up
         int idx_d = ((y + 1) % height) * width + x;          // Down
 
         cuFloatComplex sum_neighbors;
-        sum_neighbors.x = psi[idx_l].x + psi[idx_r].x + psi[idx_u].x + psi[idx_d].x;
-        sum_neighbors.y = psi[idx_l].y + psi[idx_r].y + psi[idx_u].y + psi[idx_d].y;
+        sum_neighbors.x =
+            psi[idx_l].x + psi[idx_r].x + psi[idx_u].x + psi[idx_d].x;
+        sum_neighbors.y =
+            psi[idx_l].y + psi[idx_r].y + psi[idx_u].y + psi[idx_d].y;
 
         cuFloatComplex laplacian;
         laplacian.x = (sum_neighbors.x - 4.0f * val.x) / (dx * dx);
         laplacian.y = (sum_neighbors.y - 4.0f * val.y) / (dx * dx);
 
-        float real_psi_conj_times_lap = (val.x * laplacian.x) + (val.y * laplacian.y);
+        float real_psi_conj_times_lap =
+            (val.x * laplacian.x) + (val.y * laplacian.y);
         float E_kinetic = -0.5f * real_psi_conj_times_lap;
 
         total_energy += (E_kinetic + E_interaction);
@@ -216,8 +220,7 @@ TEST_F(GrossPitaevskiiEngineTest, SolveStep_ConservesEnergy) {
   float relative_error = energy_diff / std::abs(energy_initial);
 
   EXPECT_LT(relative_error, tolerance_fraction)
-          << "Energy conservation violation > " << tolerance_percent << "%"
-          << "\nInitial E: " << energy_initial
-          << "\nFinal E:   " << energy_final
-          << "\nRel Error: " << relative_error;
+      << "Energy conservation violation > " << tolerance_percent << "%"
+      << "\nInitial E: " << energy_initial << "\nFinal E:   " << energy_final
+      << "\nRel Error: " << relative_error;
 }

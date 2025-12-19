@@ -4,8 +4,8 @@
 
 # Compiler settings
 NVCC          = nvcc
-NVCC_FLAGS    = -O3 -std=c++20 --extended-lambda -diag-suppress 191
-CXX_FLAGS     = -O3 -std=c++20
+NVCC_FLAGS    = -O3 -std=c++20 --extended-lambda -diag-suppress 191 -Xcompiler -Wmissing-field-initializers
+CXX_FLAGS     = -O3 -std=c++20 -Wmissing-field-initializers
 LIBS          = -lcufft
 
 # [NEW] Google Test Libraries

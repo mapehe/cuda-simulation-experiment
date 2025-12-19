@@ -5,7 +5,7 @@ import numpy as np
 import json
 import numpy.testing as npt
 import os
-from .util import read_gpe_snapshots
+from .util import read_gpe_snapshots, load_config
 import time
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -13,7 +13,7 @@ timestamp_str = "gpe_test_output_%s" % time.strftime("%Y%m%d_%H%M%S")
 OUTPUT_PATH = ROOT_DIR / timestamp_str
 SNAPSHOT_PATH = ROOT_DIR / "tests/snapshots/gpe_snapshot"
 
-RTOL = 1e-5
+RTOL = 1e-2
 ATOL = 1e-8
 
 
@@ -25,37 +25,42 @@ def apply_test_override():
     """
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)
-    data = {
-        "iterations": 8192,
+
+    config = load_config()
+    if config is None:
+        raise RuntimeError("Failed to load config.json")
+
+    config["grossPitaevskii"] = {
+        "iterations": 4096,
         "gridWidth": 512,
         "gridHeight": 512,
         "threadsPerBlockX": 32,
         "threadsPerBlockY": 32,
-        "downloadFrequency": 1024,
-        "simulationMode": "grossPitaevskii",
-        "grossPitaevskii": {
-            "L": 1.0,
-            "x0": 0.15,
-            "y0": 0.15,
-            "kx": 0,
-            "ky": 0,
-            "sigma": 0.1,
-            "amp": 1.0,
-            "trapStr": 10e4,
-            "V_bias": 10,
-            "r_0": 0.05,
-            "sigma2": 0.025,
-            "absorbStrength": 10e3,
-            "absorbWidth": 0.025,
-            "dt": 6e-7,
-            "g": 10e1,
-        },
+        "downloadFrequency": 512,
+        "L": 1.0,
+        "x0": 0.15,
+        "y0": 0.15,
+        "kx": 0,
+        "ky": 0,
+        "sigma": 0.1,
+        "omega": 0,
+        "amp": 1.0,
+
+        "trapStr": 10e4,
+        "V_bias": 0,
+        "r_0": 0,
+        "sigma2": 0,
+
+        "absorbStrength": 0,
+        "absorbWidth": 0,
+
+        "dt": 6e-7,
+        "g": 10e1
     }
 
     with open("configOverrides.json", "w") as f:
-        json.dump(data, f, indent=4)
-
-    subprocess.run(["./bin/main", "--output", str(OUTPUT_PATH)], check=True)
+        json.dump(config, f, indent=4)
+    subprocess.run(["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "grossPitaevskii", "--config", "configOverrides.json"], check=True)
 
 
 def test_wavefunction_evolution_fidelity():

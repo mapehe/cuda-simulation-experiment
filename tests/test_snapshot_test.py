@@ -5,15 +5,13 @@ import numpy as np
 import json
 import numpy.testing as npt
 import os
-from .util import read_binary_snapshots
+from .util import read_binary_snapshots, load_config
 import time
-
 
 ROOT_DIR = Path(__file__).parent.parent
 timestamp_str = "test_test_output_%s" % time.strftime("%Y%m%d_%H%M%S")
 OUTPUT_PATH = ROOT_DIR / timestamp_str
 SNAPSHOT_PATH = ROOT_DIR / "tests/snapshots/test_snapshot"
-config_path = ROOT_DIR / "configOverrides.json"
 
 RTOL = 1e-5
 ATOL = 1e-8
@@ -28,22 +26,23 @@ def apply_test_override():
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)
 
-    data = {
-        "test": {
-            "iterations": 8192,
-            "gridWidth": 512,
-            "gridHeight": 512,
-            "threadsPerBlockX": 32,
-            "threadsPerBlockY": 32,
-            "downloadFrequency": 1024,
-        }
-    }
+    config = load_config()
+    if config is None:
+        raise RuntimeError("Failed to load config.json")
 
+    config["test"] = {
+        "iterations": 8192,
+        "gridWidth": 512,
+        "gridHeight": 512,
+        "threadsPerBlockX": 32,
+        "threadsPerBlockY": 32,
+        "downloadFrequency": 1024,
+    }
     with open("configOverrides.json", "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(config, f, indent=4)
 
     subprocess.run(
-        ["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "test"], check=True
+        ["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "test", "--config", "configOverrides.json"], check=True
     )
 
 

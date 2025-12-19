@@ -8,9 +8,6 @@
 
 using json = nlohmann::json;
 
-const std::string CONFIG_FILENAME = "config.json";
-const std::string OVERRIDES_FILENAME = "configOverrides.json";
-
 json readFile(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
@@ -29,20 +26,8 @@ json readFile(const std::string &filename) {
 }
 
 json readConfig(json cmdArgs) {
-  json config = readFile(CONFIG_FILENAME);
+  json config = readFile(cmdArgs.at("configFile").get<std::string>());
   config.merge_patch(cmdArgs);
-
-  try {
-    json overrides = readFile(OVERRIDES_FILENAME);
-    config.merge_patch(overrides);
-    std::cout << "[CPU] Successfully merged overrides from "
-              << OVERRIDES_FILENAME << std::endl;
-  } catch (const std::runtime_error &e) {
-    std::cerr << "[CPU] Warning: Could not load overrides from "
-              << OVERRIDES_FILENAME << ". Using default configuration. ("
-              << e.what() << ")" << std::endl;
-  }
-
   return config;
 }
 
@@ -53,6 +38,10 @@ json parseArguments(int argc, char **argv) {
     TCLAP::ValueArg<std::string> outputArg("o", "output", "Path to output file",
                                            true, "", "string");
     cmd.add(outputArg);
+
+    TCLAP::ValueArg<std::string> configArg("c", "config", "Path to config file",
+                                           true, "", "string");
+    cmd.add(configArg);
 
     std::vector<std::string> allowedModes;
     for (const auto &pair : SimulationModeMap::get()) {
@@ -65,6 +54,7 @@ json parseArguments(int argc, char **argv) {
 
     cmd.parse(argc, argv);
     return json{{"output", outputArg.getValue()},
+                {"configFile", configArg.getValue()},
                 {"simulationMode", modeArg.getValue()}};
 
   } catch (TCLAP::ArgException &e) {

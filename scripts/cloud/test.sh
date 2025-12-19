@@ -33,7 +33,7 @@ if $CLEAN; then
 fi
 
 if $BUILD; then
-    ./scripts/cloud/compile_and_run.sh --mode test
+    ./scripts/cloud/compile_and_run.sh --mode test --config config.json
 fi
 
 if $UNIT; then

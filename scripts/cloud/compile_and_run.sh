@@ -10,6 +10,7 @@ HAS_UPLOAD=false
 HAS_UPLOAD_VIDEO=false
 OUTPUT_FILE=""
 SIMULATION_MODE=""
+CONFIG_FILE=""
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -25,6 +26,10 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --mode) 
             SIMULATION_MODE="$2" 
+            shift
+            ;;
+        --config) 
+            CONFIG_FILE="$2" 
             shift
             ;;
         *) 
@@ -50,10 +55,10 @@ rsync -avz \
 
 if $HAS_UPLOAD; then
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE} && gcloud storage cp ${OUTPUT_FILE} gs://${STORAGE_BUCKET}/${OUTPUT_FILE}'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE} -c ${CONFIG_FILE} && gcloud storage cp ${OUTPUT_FILE} gs://${STORAGE_BUCKET}/${OUTPUT_FILE}'"
 else
     gcloud compute ssh --zone=$ZONE cuda-gpu \
-        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE}'"
+        --command "bash -lc 'cd build_source && make && ./bin/main -o ${OUTPUT_FILE} -m ${SIMULATION_MODE} -c ${CONFIG_FILE}'"
 fi
 
 if $HAS_UPLOAD_VIDEO; then

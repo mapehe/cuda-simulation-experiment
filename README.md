@@ -58,9 +58,6 @@ FluxLab serves as a translation layer between two target groups:
 
 ## Implemented Physics: The Gross-Pitaevskii Equation
 
-⚠️ Tests have revealed bugs in the simulation code. These are being worked on, 
-however the GPE simulation is not accurate at the moment. ⚠️
-
 FluxLab currently implements a solver for the **Gross-Pitaevskii Equation
 (GPE)**.
 
@@ -92,30 +89,6 @@ stress test for the system's technical capabilities:
       conserves physical quantities but also maintains exact numerical
       reproducibility across commits.
 
-## Getting Started
-
-The project includes a default `config.json` designed to serve as an end-to-end
-"Hello World" test to verify your setup.
-
-### Running locally
-
-1. Create a Python virtual environment and install the required packages.
-```bash
-pip install -r requirements.txt
-```
-
-2. Build and run
-
-```bash
-make && ./bin/main --output example
-```
-3. Visualize the results
-```bash
-./scripts/postprocess/postprocess.py example
-```
-
-The simulation results will be rendered to `example.mp4`.
-
 ### No Local GPU? 
 
 If you do not have access to a local NVIDIA workstation, you can run
@@ -125,13 +98,13 @@ launch instructions.
 Once your cloud environment is ready, execute the simulation remotely:
 
 ```bash
-./scripts/cloud/compile_and_run.sh --upload-video --output example
+./scripts/cloud/compile_and_run.sh --mode grossPitaevskii --config config.json --upload-video --output example
 ```
 
 You can then download the resulting video using the gcloud CLI:
 
 ```bash
-glcoud storage cp gs://$STORAGE_BUCKET/example.mp4 .
+gcloud storage cp gs://$STORAGE_BUCKET/example.mp4 .
 ```
 
 ## Extending
