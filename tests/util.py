@@ -4,6 +4,7 @@ import json
 import numpy.testing as npt
 import os
 
+
 def load_config():
     try:
         with open("config.json", "r", encoding="utf-8") as f:
@@ -15,6 +16,7 @@ def load_config():
         print(f"Error parsing JSON: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
+
 
 def read_binary_snapshots(snapshot_file, output_file):
     header_line = snapshot_file.readline()

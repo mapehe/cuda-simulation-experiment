@@ -45,22 +45,30 @@ def apply_test_override():
         "sigma": 0.1,
         "omega": 0,
         "amp": 1.0,
-
         "trapStr": 10e4,
         "V_bias": 0,
         "r_0": 0,
         "sigma2": 0,
-
         "absorbStrength": 0,
         "absorbWidth": 0,
-
         "dt": 6e-7,
-        "g": 10e1
+        "g": 10e1,
     }
 
     with open("configOverrides.json", "w") as f:
         json.dump(config, f, indent=4)
-    subprocess.run(["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "grossPitaevskii", "--config", "configOverrides.json"], check=True)
+    subprocess.run(
+        [
+            "./bin/main",
+            "--output",
+            str(OUTPUT_PATH),
+            "--mode",
+            "grossPitaevskii",
+            "--config",
+            "configOverrides.json",
+        ],
+        check=True,
+    )
 
 
 def test_wavefunction_evolution_fidelity():

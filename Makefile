@@ -2,10 +2,11 @@
 # Generic Makefile for CUDA Projects (Enhanced for GTest)
 # ------------------------------------------------
 
+
 # Compiler settings
 NVCC          = nvcc
-NVCC_FLAGS    = -O3 -std=c++20 --extended-lambda -diag-suppress 191 -Xcompiler -Wmissing-field-initializers
-CXX_FLAGS     = -O3 -std=c++20 -Wmissing-field-initializers
+NVCC_FLAGS    = -O3 -std=c++20 --extended-lambda -diag-suppress 191 -Xcompiler -Wmissing-field-initializers -DCOMMIT_HASH=\"${COMMIT_HASH}\"
+CXX_FLAGS     = -O3 -std=c++20 -Wmissing-field-initializers -DCOMMIT_HASH=\"${COMMIT_HASH}\"
 LIBS          = -lcufft
 
 # [NEW] Google Test Libraries

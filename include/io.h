@@ -27,7 +27,11 @@ inline void saveToBinaryJSON(const SaveOptions &opts) {
   if (!out)
     throw std::runtime_error("Could not open file");
 
-  std::string headerStr = header.dump();
+  json tmp = header;
+  json version = json({{"commit", COMMIT_HASH}});
+  tmp.merge_patch(version);
+  std::string headerStr = tmp.dump();
+
   out.write(headerStr.c_str(), headerStr.size());
   out.write("\n", 1);
 

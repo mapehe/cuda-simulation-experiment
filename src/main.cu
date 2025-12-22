@@ -65,7 +65,8 @@ json parseArguments(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  std::cout << std::endl << "Starting FluxLab..." << std::endl;
+  std::cout << std::endl
+            << "Starting FluxLab (" << COMMIT_HASH << ")..." << std::endl;
 
   json cmdArgs = parseArguments(argc, argv);
   run(readConfig(cmdArgs));

@@ -42,7 +42,16 @@ def apply_test_override():
         json.dump(config, f, indent=4)
 
     subprocess.run(
-        ["./bin/main", "--output", str(OUTPUT_PATH), "--mode", "test", "--config", "configOverrides.json"], check=True
+        [
+            "./bin/main",
+            "--output",
+            str(OUTPUT_PATH),
+            "--mode",
+            "test",
+            "--config",
+            "configOverrides.json",
+        ],
+        check=True,
     )
 
 
